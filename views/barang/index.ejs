@@ -1,0 +1,74 @@
+<div class="container-fluid px-4">
+  <h1 class="mt-4">Data Barang</h1>
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+    <li class="breadcrumb-item active">Barang</li>
+  </ol>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <i class="fas fa-table me-1"></i>
+          Daftar Barang
+        </div>
+        <a href="/barang/create" class="btn btn-primary btn-sm">
+          <i class="fas fa-plus"></i> Tambah Barang
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      <table id="datatablesSimple" class="table table-bordered">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Barang</th>
+            <th>Usaha</th>
+            <th>Harga Beli</th>
+            <th>Harga Jual</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (barang && barang.length > 0) { %> <% barang.forEach((item,
+          index) => { %>
+          <tr>
+            <td><%= index + 1 %></td>
+            <td><%= item.nama_barang %></td>
+            <td><%= item.nama_usaha || '-' %></td>
+            <td>Rp <%= item.harga_beli.toLocaleString() %></td>
+            <td>Rp <%= item.harga_jual.toLocaleString() %></td>
+            <td>
+              <a
+                href="/barang/edit/<%= item.id %>"
+                class="btn btn-warning btn-sm"
+              >
+                <i class="fas fa-edit"></i>
+              </a>
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                onclick="confirmDelete(`${item.id}`)"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          <% }); %> <% } else { %>
+          <tr>
+            <td colspan="7" class="text-center">Tidak ada data</td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(id) {
+    if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+      window.location.href = `/barang/delete/${id}`;
+    }
+  }
+</script>

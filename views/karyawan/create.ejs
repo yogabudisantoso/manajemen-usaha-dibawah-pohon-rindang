@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tambah Karyawan</title>
+    <link href="/css/sb-admin-2.min.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="mb-4">Tambah Karyawan</h1>
+      <form action="/karyawan/create" method="POST">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            name="password"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="usaha_id">Usaha</label>
+          <select class="form-control" id="usaha_id" name="usaha_id" required>
+            <option value="">Pilih Usaha</option>
+            <% usaha.forEach((item) => { %>
+            <option value="<%= item.id %>"><%= item.nama_usaha %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Simpan</button>
+          <a href="/karyawan" class="btn btn-secondary">Kembali</a>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

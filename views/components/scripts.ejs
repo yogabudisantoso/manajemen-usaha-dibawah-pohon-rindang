@@ -1,0 +1,177 @@
+<!-- Bootstrap core JavaScript-->
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<!-- Core plugin JavaScript-->
+<script src="/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+<!-- Custom scripts for all pages-->
+<script src="/js/sb-admin-2.min.js"></script>
+
+<!-- Page level plugins -->
+<script src="/vendor/chart.js/Chart.min.js"></script>
+
+<%- script %>
+
+<!-- Socket.IO client -->
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Script untuk Notifikasi -->
+<script>
+  console.log("--- Notifikasi Script Start ---");
+
+  // Hubungkan ke Socket.IO server
+  const socket = io();
+
+  socket.on("connect", () => {
+    console.log("Terhubung ke Socket.IO server");
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Terputus dari Socket.IO server");
+  });
+
+  // Inisialisasi state notifikasi
+  let notificationCount = 0;
+  let lastPemasukanId = null;
+
+  function resetNotificationDropdown() {
+    const notificationDropdownContent = document.getElementById(
+      "notificationDropdownContent"
+    );
+    // Hapus semua notifikasi kecuali header dan link paling bawah
+    while (notificationDropdownContent.children.length > 2) {
+      notificationDropdownContent.removeChild(
+        notificationDropdownContent.children[1]
+      );
+    }
+    // Tambahkan pesan default jika kosong
+    const emptyNotif = document.createElement("a");
+    emptyNotif.className = "dropdown-item text-center small text-gray-500";
+    emptyNotif.textContent = "";
+    notificationDropdownContent.insertBefore(
+      emptyNotif,
+      notificationDropdownContent.children[1]
+    );
+    // Reset badge
+    const badge = document.querySelector("#alertsDropdown .badge-counter");
+    if (badge) badge.innerText = "";
+    notificationCount = 0;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    resetNotificationDropdown();
+  });
+
+  // Dengarkan event transaksi baru
+  socket.on("new_transaction", (data) => {
+    console.log(
+      "DATA SOCKET.IO DITERIMA:",
+      data,
+      typeof data.transaction.total,
+      data.transaction.total
+    );
+    if (
+      !data ||
+      !data.transaction ||
+      typeof data.transaction.total !== "number" ||
+      !isFinite(data.transaction.total) ||
+      data.transaction.total <= 0
+    ) {
+      return;
+    }
+    let message = "";
+    if (data.transaction.detail) {
+      message += `<div>${data.transaction.detail}</div>`;
+    }
+    message += `<b>Total: Rp ${data.transaction.total.toLocaleString(
+      "id-ID"
+    )}</b>`;
+    // Hapus pesan default jika ada notifikasi baru
+    const notificationDropdownContent = document.getElementById(
+      "notificationDropdownContent"
+    );
+    if (
+      notificationDropdownContent.children.length > 2 &&
+      notificationDropdownContent.children[1].textContent ===
+        "Notifikasi masih kosong"
+    ) {
+      notificationDropdownContent.removeChild(
+        notificationDropdownContent.children[1]
+      );
+    }
+    addNotificationToDropdown("pemasukan", message);
+  });
+
+  // Fungsi untuk menambahkan notifikasi ke dropdown
+  function addNotificationToDropdown(type, message) {
+    const notificationDropdownContent = document.getElementById(
+      "notificationDropdownContent"
+    );
+    const notificationItem = document.createElement("a");
+    notificationItem.className = "dropdown-item d-flex align-items-center";
+    notificationItem.href = "#"; // Ganti dengan link yang sesuai jika ada
+    notificationItem.innerHTML = `
+      <div class="mr-3">
+        <div class="icon-circle bg-${
+          type === "pemasukan" ? "success" : "danger"
+        }">
+          <i class="fas fa-${
+            type === "pemasukan" ? "plus" : "minus"
+          } text-white"></i>
+        </div>
+      </div>
+      <div>
+        <div class="small text-gray-500">${new Date().toLocaleDateString(
+          "id-ID",
+          { year: "numeric", month: "long", day: "numeric" }
+        )}</div>
+        <span>${message}</span>
+      </div>
+    `;
+    // Tambahkan notifikasi baru di bagian atas daftar
+    notificationDropdownContent.insertBefore(
+      notificationItem,
+      notificationDropdownContent.children[1]
+    );
+
+    // Update badge count (opsional, jika Anda ingin menampilkan jumlah notifikasi)
+    const badge = document.querySelector("#alertsDropdown .badge-counter");
+    if (badge) {
+      const currentCount = parseInt(badge.innerText) || 0;
+      badge.innerText = currentCount + 1 > 9 ? "9+" : currentCount + 1;
+    }
+  }
+
+  // Fungsi untuk memeriksa transaksi baru
+  function checkNewTransactions() {
+    fetch("/api/transactions/latest")
+      .then((response) => response.json())
+      .then((data) => {
+        if (
+          data.pemasukan &&
+          data.pemasukan.id &&
+          data.pemasukan.total_harga_item &&
+          data.pemasukan.id !== lastPemasukanId
+        ) {
+          addNotificationToDropdown(
+            "pemasukan",
+            `Pemasukan baru sebesar Rp ${Number(
+              data.pemasukan.total_harga_item
+            ).toLocaleString("id-ID")}`
+          );
+          lastPemasukanId = data.pemasukan.id;
+        }
+        // Pengeluaran bisa ditambahkan logika serupa jika dibutuhkan
+      })
+      .catch((error) => console.error("Error:", error));
+  }
+
+  // Periksa transaksi baru setiap 30 detik
+  // setInterval(checkNewTransactions, 30000);
+
+  // Periksa transaksi baru saat halaman dimuat
+  document.addEventListener("DOMContentLoaded", checkNewTransactions);
+
+  console.log("--- Notifikasi Script End ---");
+</script>

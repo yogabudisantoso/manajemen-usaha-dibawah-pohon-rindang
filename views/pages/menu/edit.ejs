@@ -1,0 +1,112 @@
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Edit Menu Makanan</h1>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+  <div class="col-lg-12 mb-4">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+          Form Edit Menu Makanan
+        </h6>
+      </div>
+      <div class="card-body">
+        <% if (menu) { %>
+        <form
+          action="/api/menu/<%= menu.id %>?_method=PUT"
+          method="POST"
+          enctype="multipart/form-data"
+        >
+          <input type="hidden" name="_method" value="PUT" />
+          <input
+            type="hidden"
+            name="existing_gambar"
+            value="<%= menu.gambar || '' %>"
+          />
+          <div class="mb-3">
+            <label for="usaha_id" class="form-label">Usaha</label>
+            <select class="form-control" id="usaha_id" name="usaha_id" required>
+              <option value="">Pilih Usaha</option>
+              <% usahaList.forEach(function(usaha) { %>
+                <option value="<%= usaha.id %>" <%= menu.usaha_id == usaha.id ? 'selected' : '' %>><%= usaha.nama_usaha %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="nama_menu">Nama Menu:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="nama_menu"
+              name="nama_menu"
+              value="<%= menu.nama_menu || '' %>"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="deskripsi">Deskripsi:</label>
+            <textarea
+              class="form-control"
+              id="deskripsi"
+              name="deskripsi"
+              rows="3"
+            >
+<%= menu.deskripsi || '' %></textarea
+            >
+          </div>
+          <div class="form-group">
+            <label for="harga">Harga:</label>
+            <input
+              type="number"
+              class="form-control"
+              id="harga"
+              name="harga"
+              value="<%= menu.harga || '' %>"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="stok">Stok:</label>
+            <input
+              type="number"
+              class="form-control"
+              id="stok"
+              name="stok"
+              value="<%= menu.stok || '' %>"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="gambar">Gambar:</label>
+            <% if (menu.gambar) { %>
+            <p>
+              Gambar saat ini:
+              <img
+                src="<%= menu.gambar %>"
+                alt="Gambar <%= menu.nama_menu %>"
+                width="100"
+              />
+            </p>
+            <% } %>
+            <input
+              type="file"
+              class="form-control-file"
+              id="gambar"
+              name="gambar"
+            />
+            <small class="form-text text-muted"
+              >Biarkan kosong jika tidak ingin mengubah gambar</small
+            >
+          </div>
+          <button type="submit" class="btn btn-primary">Update Menu</button>
+          <a href="/menu" class="btn btn-secondary">Batal</a>
+        </form>
+        <% } else { %>
+        <p>Data menu tidak ditemukan.</p>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>

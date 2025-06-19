@@ -1,0 +1,30 @@
+{
+  "name": "manajemen-keuangan",
+  "version": "1.0.0",
+  "description": "Aplikasi Manajemen Keuangan",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "ejs": "^3.1.10",
+    "express": "^4.18.2",
+    "express-ejs-layouts": "^2.5.1",
+    "express-session": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "method-override": "^3.0.0",
+    "multer": "^2.0.0",
+    "mysql2": "^3.6.5",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

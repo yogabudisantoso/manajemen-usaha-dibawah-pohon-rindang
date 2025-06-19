@@ -1,0 +1,118 @@
+<!-- Page Heading -->
+<h1 class="h3 mb-2 text-gray-800">Data Pemasukan</h1>
+<p class="mb-4">Halaman ini menampilkan data pemasukan dari pesanan menu.</p>
+
+<!-- DataTales Example -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Tabel Pemasukan</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table
+        class="table table-bordered"
+        id="dataTable"
+        width="100%"
+        cellspacing="0"
+      >
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Pesanan</th>
+            <th>Jumlah Total</th>
+            <th>Total Harga</th>
+            <th>Usaha</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>Tanggal</th>
+            <th>Pesanan</th>
+            <th>Jumlah Total</th>
+            <th>Total Harga</th>
+            <th>Usaha</th>
+            <th>Aksi</th>
+          </tr>
+        </tfoot>
+        <tbody>
+          <% if (pemasukan && pemasukan.length > 0) { %> <%
+          pemasukan.forEach(function(group) { %>
+          <tr>
+            <td>
+              <%= new Date(group.waktu_transaksi).toLocaleDateString('id-ID') %>
+            </td>
+            <td>
+              <% group.items.forEach(function(item) { %>
+              <div><%= item.nama_menu %> (<%= item.jumlah %>)</div>
+              <% }); %>
+            </td>
+            <td>
+              <%= group.items.reduce((total, item) => total + item.jumlah, 0) %>
+            </td>
+            <td>
+              Rp <%= group.total_harga.toLocaleString('id-ID', {
+              minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
+            </td>
+            <td><%= group.nama_usaha || '-' %></td>
+            <td>
+              <button
+                onclick="deletePemasukanGroup('<%= group.pemasukanIds.join(',') %>')"
+                class="btn btn-danger btn-sm"
+              >
+                Hapus Pesanan
+              </button>
+            </td>
+          </tr>
+          <% }); %> <% } else { %>
+          <tr>
+            <td colspan="6" class="text-center">Belum ada data pemasukan.</td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function deletePemasukanGroup(idsString) {
+    const ids = idsString.split(",");
+    if (
+      confirm(
+        "Apakah Anda yakin ingin menghapus pesanan ini?" +
+          (ids.length > 1
+            ? " Ini akan menghapus semua item dalam pesanan ini."
+            : "")
+      )
+    ) {
+      try {
+        let success = true;
+        for (const id of ids) {
+          const response = await fetch(`/api/pemasukan/${id.trim()}`, {
+            method: "DELETE",
+          });
+          if (!response.ok) {
+            success = false;
+            console.error(
+              `Gagal menghapus item pemasukan dengan ID ${id.trim()}`
+            );
+          }
+        }
+
+        if (success) {
+          alert("Pesanan berhasil dihapus!");
+          window.location.reload();
+        } else {
+          alert(
+            "Terjadi beberapa kesalahan saat menghapus item dalam pesanan."
+          );
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Terjadi kesalahan saat menghapus pesanan");
+      }
+    }
+  }
+</script>

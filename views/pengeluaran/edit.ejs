@@ -1,0 +1,61 @@
+<!-- Begin Page Content -->
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Edit Pengeluaran</h1>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Form Edit Pengeluaran</h6>
+        </div>
+        <div class="card-body">
+            <form action="/pengeluaran/update/<%= pengeluaran.id %>" method="POST">
+                <div class="form-group">
+                    <label for="tanggal">Tanggal</label>
+                    <input type="date" class="form-control" id="tanggal" name="tanggal" value="<%= pengeluaran.tanggal.toISOString().split('T')[0] %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="barang_id">Barang</label>
+                    <select class="form-control" id="barang_id" name="barang_id" required>
+                        <option value="">Pilih Barang</option>
+                        <% barang.forEach((item) => { %>
+                            <option value="<%= item.id %>" <%= item.id === pengeluaran.barang_id ? 'selected' : '' %>>
+                                <%= item.nama_barang %> - Stok: <%= item.stok %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="usaha_id">Usaha</label>
+                    <select class="form-control" id="usaha_id" name="usaha_id" required>
+                        <option value="">Pilih Usaha</option>
+                        <% usaha.forEach((item) => { %>
+                            <option
+                                value="<%= item.id %>"
+                                <%= item.id === pengeluaran.usaha_id ? 'selected' : '' %>
+                            >
+                                <%= item.nama_usaha %>
+                            </option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="jumlah">Jumlah</label>
+                    <input type="number" class="form-control" id="jumlah" name="jumlah" value="<%= pengeluaran.jumlah %>" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="harga_satuan">Harga Satuan</label>
+                    <input type="number" class="form-control" id="harga_satuan" name="harga_satuan" value="<%= pengeluaran.harga_satuan %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="harga_beli_satuan">Harga Beli Satuan</label>
+                    <input type="number" class="form-control" id="harga_beli_satuan" name="harga_beli_satuan" value="<%= pengeluaran.harga_beli_satuan %>" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="/pengeluaran" class="btn btn-secondary">Kembali</a>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- /.container-fluid --> 

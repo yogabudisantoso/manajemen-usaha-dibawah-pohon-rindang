@@ -1,0 +1,561 @@
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+  <!-- <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+    <i class="fas fa-download fa-sm text-white-50"></i> Generate Report
+  </a> -->
+</div>
+
+<!-- Container untuk Notifikasi -->
+<div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 350px;"></div>
+
+<!-- Hide all alert notifications in notificationContainer -->
+<!-- <style>
+  #notificationContainer .alert {
+    display: none !important;
+  }
+</style> -->
+
+<!-- Content Row -->
+<div class="row">
+  <!-- Pemasukan (Harian) Card Example -->
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-primary shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div
+              class="text-xs font-weight-bold text-primary text-uppercase mb-1"
+            >
+              Pemasukan (Harian)
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              Rp <%= totalPemasukanHarian.toLocaleString('id-ID') %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pemasukan (Bulanan) Card Example -->
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-success shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div
+              class="text-xs font-weight-bold text-success text-uppercase mb-1"
+            >
+              Pemasukan (Bulanan)
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              Rp <%= totalPemasukanBulanan.toLocaleString('id-ID') %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pengeluaran (Bulanan) Card Example -->
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-info shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+              Pengeluaran (Bulanan)
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              Rp <%= totalPengeluaranBulanan.toLocaleString('id-ID') %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Menu Card Example -->
+  <div class="col-xl-3 col-md-6 mb-4">
+    <div class="card border-left-warning shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div
+              class="text-xs font-weight-bold text-warning text-uppercase mb-1"
+            >
+              Total Menu
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800">
+              <%= totalMenu %>
+            </div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-utensils fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+  <!-- Bar Chart Pemasukan -->
+  <div class="col-xl-6 col-lg-6">
+    <div class="card shadow mb-4">
+      <!-- Card Header -->
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
+      >
+        <h6 class="m-0 font-weight-bold text-primary">
+          Grafik Pemasukan Harian
+        </h6>
+      </div>
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 350px">
+          <canvas id="pemasukanChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bar Chart Pengeluaran -->
+  <div class="col-xl-6 col-lg-6">
+    <div class="card shadow mb-4">
+      <!-- Card Header -->
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
+      >
+        <h6 class="m-0 font-weight-bold text-danger">
+          Grafik Pengeluaran Harian
+        </h6>
+      </div>
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 350px">
+          <canvas id="pengeluaranChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Combined Bar Chart -->
+<div class="row">
+  <div class="col-xl-12 col-lg-12">
+    <div class="card shadow mb-4">
+      <!-- Card Header -->
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
+      >
+        <h6 class="m-0 font-weight-bold text-primary">
+          Perbandingan Pemasukan vs Pengeluaran Harian
+        </h6>
+      </div>
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 400px">
+          <canvas id="combinedChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pie Chart -->
+<div class="row">
+  <div class="col-xl-12 col-lg-12">
+    <div class="card shadow mb-4">
+      <!-- Card Header -->
+      <div
+        class="card-header py-3 d-flex flex-row align-items-center justify-content-between"
+      >
+        <h6 class="m-0 font-weight-bold text-primary">
+          Distribusi Pengeluaran
+        </h6>
+      </div>
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 400px">
+          <canvas id="myPieChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Grafik Perbulan -->
+<div class="row">
+  <div class="col-xl-12 col-lg-12">
+    <div class="card shadow mb-4">
+      <!-- Card Header -->
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Grafik Pemasukan dan Pengeluaran Perbulan</h6>
+      </div>
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 400px">
+          <canvas id="monthlyChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Grafik Pertahun -->
+<div class="row">
+  <div class="col-xl-12 col-lg-12">
+    <div class="card shadow mb-4">
+      <!-- Card Header -->
+      <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Grafik Pemasukan dan Pengeluaran Pertahun</h6>
+      </div>
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 400px">
+          <canvas id="yearlyChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Page level plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+  <!-- Data Grafik Pemasukan -->
+  <script id="pemasukan-data" type="application/json">
+    <%- JSON.stringify({ labels: pemasukanHarianLabels, values: pemasukanHarianValues }) %>
+  </script>
+
+  <!-- Data Grafik Pengeluaran -->
+  <script id="pengeluaran-data" type="application/json">
+    <%- JSON.stringify({ labels: pengeluaranHarianLabels, values: pengeluaranHarianValues }) %>
+  </script>
+
+  <!-- Data Grafik Distribusi (Pie Chart) -->
+  <script id="distribusi-data" type="application/json">
+    <%- JSON.stringify({ labels: distribusiLabels, values: distribusiValues }) %>
+  </script>
+
+  <!-- Data Grafik Perbulan -->
+  <script id="monthly-data" type="application/json">
+    <%- JSON.stringify({ labels: monthlyLabels, pemasukan: monthlyPemasukan, pengeluaran: monthlyPengeluaran }) %>
+  </script>
+
+  <!-- Data Grafik Pertahun -->
+  <script id="yearly-data" type="application/json">
+    <%- JSON.stringify({ labels: yearlyLabels, pemasukan: yearlyPemasukan, pengeluaran: yearlyPengeluaran }) %>
+  </script>
+
+  <script>
+    console.log("Script is running!");
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("DOMContentLoaded fired.");
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Ambil data dari elemen script JSON
+      const pemasukanDataElement = document.getElementById('pemasukan-data');
+      const pengeluaranDataElement = document.getElementById('pengeluaran-data');
+      const distribusiDataElement = document.getElementById('distribusi-data');
+      const monthlyDataElement = document.getElementById('monthly-data');
+      const yearlyDataElement = document.getElementById('yearly-data');
+
+      // Pastikan elemen data ada sebelum mencoba memproses
+      if (pemasukanDataElement && pengeluaranDataElement && distribusiDataElement && monthlyDataElement && yearlyDataElement) {
+        try {
+          const pemasukanData = JSON.parse(pemasukanDataElement.textContent);
+          const pengeluaranData = JSON.parse(pengeluaranDataElement.textContent);
+          const distribusiData = JSON.parse(distribusiDataElement.textContent);
+          const monthlyData = JSON.parse(monthlyDataElement.textContent);
+          const yearlyData = JSON.parse(yearlyDataElement.textContent);
+
+          // Tambahkan log ini untuk debugging
+          console.log("Parsed Pemasukan Data:", pemasukanData);
+          console.log("Parsed Pengeluaran Data:", pengeluaranData);
+          console.log("Parsed Distribusi Data:", distribusiData);
+          console.log("Parsed Monthly Data:", monthlyData);
+          console.log("Parsed Yearly Data:", yearlyData);
+
+          // Cek apakah data dan elemen canvas valid sebelum membuat chart
+          const ctxPemasukan = document.getElementById("pemasukanChart");
+          const ctxPengeluaran = document.getElementById("pengeluaranChart");
+          const ctxCombined = document.getElementById("combinedChart");
+          const ctxPie = document.getElementById("myPieChart");
+          const ctxMonthly = document.getElementById("monthlyChart");
+          const ctxYearly = document.getElementById("yearlyChart");
+
+          console.log("DOMContentLoaded fired."); // Log saat DOM siap
+          console.log("Canvas elements:", { 
+            ctxPemasukan: !!ctxPemasukan, 
+            ctxPengeluaran: !!ctxPengeluaran, 
+            ctxCombined: !!ctxCombined, 
+            ctxPie: !!ctxPie,
+            ctxMonthly: !!ctxMonthly,
+            ctxYearly: !!ctxYearly
+          }); // Log keberadaan canvas
+
+          if (pemasukanData && pemasukanData.labels && pemasukanData.values && ctxPemasukan) {
+            new Chart(ctxPemasukan, {
+              type: 'bar',
+              data: {
+                labels: pemasukanData.labels,
+                datasets: [{
+                  label: 'Pemasukan Harian',
+                  data: pemasukanData.values,
+                  backgroundColor: '#4e73df',
+                }]
+              },
+               options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+            });
+          } else {
+               console.warn("Data atau canvas Pemasukan tidak siap.", { pemasukanData, ctxPemasukan });
+          }
+
+          if (pengeluaranData && pengeluaranData.labels && pengeluaranData.values && ctxPengeluaran) {
+            new Chart(ctxPengeluaran, {
+              type: 'bar',
+              data: {
+                labels: pengeluaranData.labels,
+                datasets: [{
+                  label: 'Pengeluaran Harian',
+                  data: pengeluaranData.values,
+                  backgroundColor: '#e74a3b',
+                }]
+              },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+            });
+          } else {
+              console.warn("Data atau canvas Pengeluaran tidak siap.", { pengeluaranData, ctxPengeluaran });
+          }
+
+           if (pemasukanData && pemasukanData.labels && pemasukanData.values && pengeluaranData && pengeluaranData.labels && pengeluaranData.values && ctxCombined) {
+             new Chart(ctxCombined, {
+               type: 'bar',
+               data: {
+                 labels: pemasukanData.labels,
+                 datasets: [
+                   {
+                     label: 'Pemasukan',
+                     data: pemasukanData.values,
+                     backgroundColor: '#4e73df'
+                   },
+                   {
+                     label: 'Pengeluaran',
+                     data: pengeluaranData.values,
+                     backgroundColor: '#e74a3b'
+                   }
+                 ]
+               },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } } }
+             });
+           } else {
+              console.warn("Data atau canvas Combined tidak siap.", { pemasukanData, pengeluaranData, ctxCombined });
+          }
+
+          if (distribusiData && distribusiData.labels && distribusiData.values && distribusiData.values.length > 0 && ctxPie) {
+            new Chart(ctxPie, {
+              type: 'pie',
+              data: {
+                labels: distribusiData.labels,
+                datasets: [{
+                  data: distribusiData.values,
+                  backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'
+                  ],
+                  hoverOffset: 10
+                }]
+              },
+               options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            });
+          } else {
+             console.warn("Data atau canvas Distribusi tidak siap atau data kosong.", { distribusiData, ctxPie });
+          }
+
+          // Grafik Perbulan
+          if (monthlyData && monthlyData.labels && monthlyData.pemasukan && monthlyData.pengeluaran && ctxMonthly) {
+            new Chart(ctxMonthly, {
+              type: 'bar',
+              data: {
+                labels: monthlyData.labels,
+                datasets: [
+                  {
+                    label: 'Pemasukan',
+                    data: monthlyData.pemasukan,
+                    backgroundColor: '#4e73df'
+                  },
+                  {
+                    label: 'Pengeluaran',
+                    data: monthlyData.pengeluaran,
+                    backgroundColor: '#e74a3b'
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top'
+                  },
+                  title: {
+                    display: true,
+                    text: 'Pemasukan dan Pengeluaran Perbulan'
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: function(value) {
+                        return 'Rp ' + value.toLocaleString('id-ID');
+                      }
+                    }
+                  }
+                }
+              }
+            });
+          }
+
+          // Grafik Pertahun
+          if (yearlyData && yearlyData.labels && yearlyData.pemasukan && yearlyData.pengeluaran && ctxYearly) {
+            new Chart(ctxYearly, {
+              type: 'bar',
+              data: {
+                labels: yearlyData.labels,
+                datasets: [
+                  {
+                    label: 'Pemasukan',
+                    data: yearlyData.pemasukan,
+                    backgroundColor: '#4e73df'
+                  },
+                  {
+                    label: 'Pengeluaran',
+                    data: yearlyData.pengeluaran,
+                    backgroundColor: '#e74a3b'
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top'
+                  },
+                  title: {
+                    display: true,
+                    text: 'Pemasukan dan Pengeluaran Pertahun'
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: function(value) {
+                        return 'Rp ' + value.toLocaleString('id-ID');
+                      }
+                    }
+                  }
+                }
+              }
+            });
+          }
+
+        } catch (error) {
+          console.error("Error parsing JSON data:", error);
+        }
+      } else {
+        console.error("Elemen script data grafik tidak ditemukan.");
+      }
+    });
+
+     console.log("--- Chart Initialization Script End ---"); // Log di akhir script
+
+  </script>
+
+  <!-- Script untuk Notifikasi -->
+  <script>
+    // Fungsi untuk membuat notifikasi
+    function createNotification(type, message) {
+      const notificationContainer = document.getElementById('notificationContainer');
+      if (!notificationContainer) {
+        console.error('Notification container not found');
+        return;
+      }
+
+      const notification = document.createElement('div');
+      notification.className = `alert alert-${type === 'pemasukan' ? 'success' : 'danger'} alert-dismissible fade show`;
+      notification.innerHTML = `
+        <i class="fas fa-${type === 'pemasukan' ? 'plus-circle' : 'minus-circle'}"></i>
+        <strong>${type === 'pemasukan' ? 'Pemasukan' : 'Pengeluaran'} Baru!</strong> ${message}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      `;
+      notificationContainer.prepend(notification);
+
+      // Hapus notifikasi setelah 5 detik
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    }
+
+    // Fungsi untuk memeriksa transaksi baru
+    function checkNewTransactions() {
+      fetch('/api/transactions/latest')
+        .then(response => response.json())
+        .then(data => {
+          const pemasukanJumlah = Number(data.pemasukan && data.pemasukan.jumlah);
+          if (
+            data.pemasukan &&
+            !isNaN(pemasukanJumlah) &&
+            pemasukanJumlah > 0
+          ) {
+            createNotification(
+              'pemasukan',
+              `Pemasukan baru sebesar Rp ${pemasukanJumlah.toLocaleString('id-ID')}`
+            );
+          }
+          const pengeluaranJumlah = Number(data.pengeluaran && data.pengeluaran.jumlah);
+          if (
+            data.pengeluaran &&
+            !isNaN(pengeluaranJumlah) &&
+            pengeluaranJumlah > 0
+          ) {
+            createNotification(
+              'pengeluaran',
+              `Pengeluaran baru sebesar Rp ${pengeluaranJumlah.toLocaleString('id-ID')}`
+            );
+          }
+        })
+        .catch(error => {
+          console.error('Error checking transactions:', error);
+        });
+    }
+
+    // Periksa transaksi baru setiap 30 detik
+    // setInterval(checkNewTransactions, 30000);
+
+    // Periksa transaksi baru saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', checkNewTransactions);
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,65 @@
+<div class="container-fluid px-4">
+  <h1 class="mt-4">Tambah Barang</h1>
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="/barang">Barang</a></li>
+    <li class="breadcrumb-item active">Tambah</li>
+  </ol>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <i class="fas fa-plus me-1"></i>
+      Form Tambah Barang
+    </div>
+    <div class="card-body">
+      <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-danger"><%= error %></div>
+      <% } %>
+      <form action="/barang/store" method="POST">
+        <div class="form-group">
+          <label for="nama_barang">Nama Barang</label>
+          <input
+            type="text"
+            class="form-control"
+            id="nama_barang"
+            name="nama_barang"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="usaha_id">Usaha</label>
+          <select class="form-control" id="usaha_id" name="usaha_id" required>
+            <option value="">Pilih Usaha</option>
+            <% usaha.forEach((item) => { %>
+            <option value="<%= item.id %>"><%= item.nama_usaha %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="harga_beli">Harga Beli</label>
+          <input
+            type="number"
+            class="form-control"
+            id="harga_beli"
+            name="harga_beli"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="harga_jual">Harga Jual</label>
+          <input
+            type="number"
+            class="form-control"
+            id="harga_jual"
+            name="harga_jual"
+            required
+          />
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">Simpan</button>
+          <a href="/barang" class="btn btn-secondary">Kembali</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

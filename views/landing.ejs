@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Menu Makanan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <!-- Tombol Logout -->
+    <div class="flex justify-end p-4">
+      <a
+        href="/logout"
+        class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+      >
+        Logout
+      </a>
+    </div>
+    <div
+      class="flex overflow-hidden flex-col justify-center items-center px-6 py-16 bg-white max-md:px-5"
+    >
+      <div class="flex flex-col max-w-full w-[1200px]">
+        <div
+          class="flex flex-col self-center max-w-full text-center text-black w-[530px]"
+        >
+          <div class="text-3xl font-bold leading-tight max-md:max-w-full">
+            Menu Makanan <% if (userUsahaName) { %> untuk <%= userUsahaName %>
+            <% } %>
+          </div>
+          <div class="mt-4 text-base leading-6 max-md:max-w-full">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
+            tincidunt sagittis eros. Quisque quis euismod lorem.
+          </div>
+        </div>
+
+        <!-- Form Pemesanan -->
+        <div class="mt-8 w-full max-w-2xl mx-auto">
+          <div id="menu-items" class="space-y-4">
+            <!-- Item menu yang akan diisi di sini -->
+          </div>
+
+          <!-- Template untuk item menu (disembunyikan) -->
+          <div
+            id="menu-item-template"
+            class="menu-item flex items-center gap-4 p-4 border rounded-lg"
+            style="display: none"
+          >
+            <select
+              class="menu-select flex-1 p-2 border rounded"
+              onchange="updatePrice(this)"
+            >
+              <option value="">Pilih Menu</option>
+              <% if (menuItems && menuItems.length > 0) { %> <%
+              menuItems.forEach(function(menu) { %>
+              <option
+                value="<%= menu.id %>"
+                data-harga="<%= menu.harga %>"
+                data-nama="<%= menu.nama_menu %>"
+              >
+                <%= menu.nama_menu %> - Rp <%=
+                menu.harga.toLocaleString('id-ID', {minimumFractionDigits: 0})
+                %>
+              </option>
+              <% }); %> <% } %>
+            </select>
+            <div class="flex items-center gap-2">
+              <button
+                onclick="decreaseQuantity(this)"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded"
+              >
+                -
+              </button>
+              <input
+                type="number"
+                value="1"
+                min="1"
+                class="w-16 text-center border rounded py-2 quantity-input"
+                readonly
+              />
+              <button
+                onclick="increaseQuantity(this)"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded"
+              >
+                +
+              </button>
+            </div>
+            <button
+              onclick="removeMenuItem(this)"
+              class="text-red-500 hover:text-red-700"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Tombol Tambah Menu -->
+          <button
+            onclick="addMenuItem()"
+            class="mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded"
+          >
+            + Tambah Menu
+          </button>
+
+          <!-- Total dan Tombol Pesan -->
+          <div class="mt-8 p-4 border rounded-lg">
+            <div class="flex justify-between items-center mb-4">
+              <span class="text-xl font-bold">Total:</span>
+              <span id="total-harga" class="text-xl font-bold">Rp 0</span>
+            </div>
+            <button
+              onclick="pesanSemua()"
+              class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+            >
+              Pesan Sekarang
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Panggil addMenuItem() saat halaman pertama kali dimuat untuk menampilkan baris menu awal
+      document.addEventListener("DOMContentLoaded", function () {
+        addMenuItem();
+      });
+
+      function addMenuItem() {
+        const template = document
+          .getElementById("menu-item-template")
+          .cloneNode(true);
+        template.style.display = "flex"; // Tampilkan elemen yang dikloning
+        template.querySelector("select").value = "";
+        template.querySelector(".quantity-input").value = 1;
+        document.getElementById("menu-items").appendChild(template);
+        updateTotal();
+      }
+
+      function removeMenuItem(button) {
+        const menuItems = document.getElementById("menu-items");
+        if (menuItems.children.length > 1) {
+          button.closest(".menu-item").remove();
+          updateTotal();
+        } else {
+          alert("Minimal harus ada satu menu!");
+        }
+      }
+
+      function increaseQuantity(button) {
+        const input = button.parentElement.querySelector(".quantity-input");
+        input.value = parseInt(input.value) + 1;
+        updateTotal();
+      }
+
+      function decreaseQuantity(button) {
+        const input = button.parentElement.querySelector(".quantity-input");
+        if (parseInt(input.value) > 1) {
+          input.value = parseInt(input.value) - 1;
+          updateTotal();
+        }
+      }
+
+      function updatePrice(select) {
+        updateTotal();
+      }
+
+      function updateTotal() {
+        let total = 0;
+        document.querySelectorAll(".menu-item").forEach((item) => {
+          const select = item.querySelector("select");
+          const quantity = parseInt(
+            item.querySelector(".quantity-input").value
+          );
+          const harga = parseInt(
+            select.options[select.selectedIndex].dataset.harga || 0
+          );
+          total += harga * quantity;
+        });
+        document.getElementById(
+          "total-harga"
+        ).textContent = `Rp ${total.toLocaleString("id-ID")}`;
+      }
+
+      async function pesanSemua() {
+        const orders = [];
+        let hasSelectedItem = false; // Flag untuk menandai apakah ada item yang dipilih
+
+        document.querySelectorAll(".menu-item").forEach((item) => {
+          const select = item.querySelector("select");
+          const quantityInput = item.querySelector(".quantity-input");
+          const menuId = select.value;
+          const quantity = parseInt(quantityInput.value);
+
+          // Hanya tambahkan item ke orders jika menu dipilih dan jumlah valid
+          if (menuId && quantity > 0) {
+            orders.push({
+              menu_id: menuId,
+              jumlah: quantity,
+            });
+            hasSelectedItem = true; // Set flag jika ada item yang valid
+          } else if (menuId && quantity <= 0) {
+            // Opsional: Beri peringatan jika menu dipilih tapi jumlah tidak valid
+            alert(
+              `Jumlah untuk menu ${select.options[
+                select.selectedIndex
+              ].text.trim()} harus lebih dari 0.`
+            );
+            hasSelectedItem = false; // Batalkan pesanan jika ada jumlah 0
+            return; // Hentikan iterasi
+          }
+          // Abaikan baris jika menu belum dipilih
+        });
+
+        // Cek apakah ada item yang valid dalam pesanan
+        if (!hasSelectedItem || orders.length === 0) {
+          alert("Pilih minimal satu menu dan pastikan jumlahnya valid!");
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/pemasukan", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              items: orders,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert("Pesanan berhasil diproses!");
+            // Reset form
+            const menuItems = document.getElementById("menu-items");
+            menuItems.innerHTML = ""; // Kosongkan item yang sudah ada
+            addMenuItem(); // Tambahkan satu baris menu kosong baru
+            updateTotal();
+          } else {
+            alert(data.message || "Terjadi kesalahan saat memproses pesanan");
+          }
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Terjadi kesalahan saat memproses pesanan");
+        }
+      }
+    </script>
+  </body>
+</html>

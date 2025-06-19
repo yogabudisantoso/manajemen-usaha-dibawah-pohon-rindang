@@ -1,0 +1,96 @@
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+  <h1 class="h3 mb-0 text-gray-800">Manajemen Menu Makanan</h1>
+  <!-- Tombol Tambah Data -->
+  <a
+    href="/menu/create"
+    class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"
+  >
+    <i class="fas fa-plus fa-sm text-white-50"></i> Tambah Menu Makanan
+  </a>
+</div>
+
+<!-- DataTales Example -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Tabel Data Menu Makanan</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table
+        class="table table-bordered"
+        id="dataTable"
+        width="100%"
+        cellspacing="0"
+      >
+        <thead>
+          <tr>
+            <th>Nama Menu</th>
+            <th>Usaha</th>
+            <th>Harga</th>
+            <th>Gambar</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>Nama Menu</th>
+            <th>Usaha</th>
+            <th>Harga</th>
+            <th>Gambar</th>
+            <th>Aksi</th>
+          </tr>
+        </tfoot>
+        <tbody>
+          <% if (menu && menu.length > 0) { %> <% menu.forEach(function(item) {
+          %>
+          <tr>
+            <td><%= item.nama_menu || 'Nama Menu' %></td>
+            <td><%= item.nama_usaha || '-' %></td>
+            <td>
+              <%= item.harga ? 'Rp ' + item.harga.toLocaleString('id-ID') : '-'
+              %>
+            </td>
+            <td>
+              <% if (item.gambar) { %>
+              <img
+                src="<%= item.gambar %>"
+                alt="Gambar <%= item.nama_menu %>"
+                width="50"
+              />
+              <% } else { %> Tidak Ada Gambar <% } %>
+            </td>
+            <td>
+              <a
+                href="/menu/edit/<%= item.id %>"
+                class="btn btn-info btn-sm mr-1"
+                >Edit</a
+              >
+              <!-- Form untuk tombol Hapus -->
+              <form
+                action="/api/menu/<%= item.id %>?_method=DELETE"
+                method="POST"
+                class="d-inline"
+              >
+                <button
+                  type="submit"
+                  class="btn btn-danger btn-sm"
+                  onclick="return confirm('Apakah Anda yakin ingin menghapus menu ini?');"
+                >
+                  Hapus
+                </button>
+              </form>
+            </td>
+          </tr>
+          <% }); %> <% } else { %>
+          <tr>
+            <td colspan="5" class="text-center">
+              Belum ada data menu makanan.
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
