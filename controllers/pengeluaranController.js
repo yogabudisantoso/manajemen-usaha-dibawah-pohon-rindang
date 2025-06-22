@@ -132,9 +132,7 @@ exports.renderPengeluaranIndex = async (req, res) => {
     const usahaList = await Pengeluaran.getAllUsaha(); // Ambil daftar semua usaha
 
     const formattedPengeluaran = pengeluaranData.map((item) => {
-      const tanggalPengeluaran = item.tanggal_pengeluaran
-        ? new Date(item.tanggal_pengeluaran)
-        : new Date("Invalid Date");
+      const tanggalPengeluaran = item.tanggal ? new Date(item.tanggal) : null;
 
       return {
         id: item.id,
@@ -269,5 +267,20 @@ exports.updatePengeluaranForm = async (req, res) => {
     res
       .status(500)
       .send("Terjadi kesalahan server saat memperbarui data pengeluaran.");
+  }
+};
+
+exports.deletePengeluaran = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Pengeluaran.delete(id);
+    if (deleted) {
+      res.redirect("/pengeluaran");
+    } else {
+      res.status(404).send("Data pengeluaran tidak ditemukan");
+    }
+  } catch (error) {
+    console.error("Error saat menghapus pengeluaran:", error);
+    res.status(500).send("Terjadi kesalahan saat menghapus data pengeluaran");
   }
 };

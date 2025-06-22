@@ -95,6 +95,14 @@ class Pengeluaran {
     }
   }
 
+  static async delete(id) {
+    const [result] = await db.execute(
+      "DELETE FROM pengeluaran_barang WHERE id = ?",
+      [id]
+    );
+    return result.affectedRows > 0;
+  }
+
   // Metode lain seperti findByBarangId, findByUserId, findByDateRange bisa ditambahkan
 }
 

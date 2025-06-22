@@ -29,4 +29,11 @@ router.post(
   /* authorize('pemilik toko'), */ pengeluaranController.recordPengeluaranBarang
 );
 
+// Route untuk menghapus data pengeluaran
+router.post(
+  "/delete/:id",
+  isAuthenticated,
+  pengeluaranController.deletePengeluaran
+);
+
 module.exports = router;

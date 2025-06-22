@@ -16,6 +16,6 @@ router.get("/create", isAuthenticated, barangController.create);
 router.post("/store", isAuthenticated, barangController.store);
 router.get("/edit/:id", isAuthenticated, barangController.edit);
 router.post("/update/:id", isAuthenticated, barangController.update);
-router.get("/delete/:id", isAuthenticated, barangController.delete);
+router.post("/delete/:id", isAuthenticated, barangController.delete);
 
 module.exports = router;

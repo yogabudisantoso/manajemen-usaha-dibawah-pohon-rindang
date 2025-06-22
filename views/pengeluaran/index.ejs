@@ -41,7 +41,10 @@
             index) => { %>
             <tr>
               <td><%= index + 1 %></td>
-              <td><%= item.tanggal.toLocaleDateString() %></td>
+              <td>
+                <%= item.tanggal ? item.tanggal.toLocaleDateString('id-ID', {
+                dateStyle: 'medium' }) : '-' %>
+              </td>
               <td><%= item.nama_barang %></td>
               <td><%= item.jumlah %></td>
               <td><%= item.harga_beli_satuan %></td>
@@ -54,13 +57,16 @@
                 >
                   <i class="fas fa-edit"></i>
                 </a>
-                <a
-                  href="/pengeluaran/delete/<%= item.id %>"
-                  class="btn btn-danger btn-sm"
-                  onclick="return confirm('Apakah Anda yakin ingin menghapus data ini?')"
+                <form
+                  action="/pengeluaran/delete/<%= item.id %>"
+                  method="POST"
+                  style="display: inline"
+                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');"
                 >
-                  <i class="fas fa-trash"></i>
-                </a>
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
               </td>
             </tr>
             <% }) %> <% } else { %>

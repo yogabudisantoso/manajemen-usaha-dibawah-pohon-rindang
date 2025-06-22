@@ -45,13 +45,16 @@
               >
                 <i class="fas fa-edit"></i>
               </a>
-              <button
-                type="button"
-                class="btn btn-danger btn-sm"
-                onclick="confirmDelete(`${item.id}`)"
+              <form
+                action="/barang/delete/<%= item.id %>"
+                method="POST"
+                style="display: inline"
+                onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');"
               >
-                <i class="fas fa-trash"></i>
-              </button>
+                <button type="submit" class="btn btn-danger btn-sm">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
             </td>
           </tr>
           <% }); %> <% } else { %>
@@ -64,11 +67,3 @@
     </div>
   </div>
 </div>
-
-<script>
-  function confirmDelete(id) {
-    if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
-      window.location.href = `/barang/delete/${id}`;
-    }
-  }
-</script>
