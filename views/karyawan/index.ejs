@@ -31,11 +31,13 @@
             <td><%= item.email %></td>
             <td><%= item.usaha || '-' %></td>
             <td>
+              <% if (item.id || item.user_id) { %>
               <a
-                href="/karyawan/edit/<%= item.id %>"
+                href="/karyawan/edit/<%= item.id ? item.id : item.user_id %>"
                 class="btn btn-warning btn-sm"
                 >Edit</a
               >
+              <% } %>
               <form
                 action="/karyawan/delete/<%= item.id %>"
                 method="POST"

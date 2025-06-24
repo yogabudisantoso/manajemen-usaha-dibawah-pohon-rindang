@@ -9,7 +9,7 @@
   <body>
     <div class="container mt-5">
       <h1 class="mb-4">Edit Karyawan</h1>
-      <form action="/karyawan/edit/<%= karyawan.user_id %>" method="POST">
+      <form action="/karyawan/edit/<%= karyawan.id ? karyawan.id : (karyawan.user_id ? karyawan.user_id : '') %>" method="POST">
         <div class="form-group">
           <label>Username</label>
           <input
