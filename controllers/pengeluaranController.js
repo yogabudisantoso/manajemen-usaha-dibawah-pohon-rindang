@@ -196,7 +196,16 @@ exports.renderEditPengeluaranPage = async (req, res) => {
 
     res.render("pengeluaran/edit", {
       title: "Edit Pengeluaran",
-      pengeluaran: pengeluaranItem,
+      pengeluaran: {
+        ...pengeluaranItem,
+        jumlah: pengeluaranItem.jumlah_beli,
+        harga_satuan:
+          pengeluaranItem.harga_satuan || pengeluaranItem.harga_beli_satuan,
+        harga_beli_satuan: pengeluaranItem.harga_beli_satuan,
+        tanggal: pengeluaranItem.tanggal
+          ? new Date(pengeluaranItem.tanggal)
+          : new Date(),
+      },
       barang: barang,
       usaha: usaha, // Meneruskan data usaha
     });

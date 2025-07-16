@@ -89,13 +89,14 @@
       try {
         let success = true;
         for (const id of ids) {
-          const response = await fetch(`/api/pemasukan/${id.trim()}`, {
+          const response = await fetch(`/pemasukan/${id.trim()}`, {
             method: "DELETE",
           });
           if (!response.ok) {
             success = false;
+            const errorText = await response.text();
             console.error(
-              `Gagal menghapus item pemasukan dengan ID ${id.trim()}`
+              `Gagal menghapus item pemasukan dengan ID ${id.trim()}: ${errorText}`
             );
           }
         }

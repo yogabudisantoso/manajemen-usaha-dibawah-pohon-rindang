@@ -18,52 +18,54 @@
       </div>
     </div>
     <div class="card-body">
-      <table id="datatablesSimple" class="table table-bordered">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Nama Barang</th>
-            <th>Usaha</th>
-            <th>Harga Beli</th>
-            <th>Harga Jual</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (barang && barang.length > 0) { %> <% barang.forEach((item,
-          index) => { %>
-          <tr>
-            <td><%= index + 1 %></td>
-            <td><%= item.nama_barang %></td>
-            <td><%= item.nama_usaha || '-' %></td>
-            <td>Rp <%= item.harga_beli.toLocaleString() %></td>
-            <td>Rp <%= item.harga_jual.toLocaleString() %></td>
-            <td>
-              <a
-                href="/barang/edit/<%= item.id %>"
-                class="btn btn-warning btn-sm"
-              >
-                <i class="fas fa-edit"></i>
-              </a>
-              <form
-                action="/barang/delete/<%= item.id %>"
-                method="POST"
-                style="display: inline"
-                onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');"
-              >
-                <button type="submit" class="btn btn-danger btn-sm">
-                  <i class="fas fa-trash"></i>
-                </button>
-              </form>
-            </td>
-          </tr>
-          <% }); %> <% } else { %>
-          <tr>
-            <td colspan="7" class="text-center">Tidak ada data</td>
-          </tr>
-          <% } %>
-        </tbody>
-      </table>
+      <div style="overflow-x: auto; width: 100%">
+        <table id="datatablesSimple" class="table table-bordered">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama Barang</th>
+              <th>Usaha</th>
+              <th>Harga Beli</th>
+              <th>Harga Jual</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (barang && barang.length > 0) { %> <% barang.forEach((item,
+            index) => { %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= item.nama_barang %></td>
+              <td><%= item.nama_usaha || '-' %></td>
+              <td>Rp <%= item.harga_beli.toLocaleString() %></td>
+              <td>Rp <%= item.harga_jual.toLocaleString() %></td>
+              <td>
+                <a
+                  href="/barang/edit/<%= item.id %>"
+                  class="btn btn-warning btn-sm"
+                >
+                  <i class="fas fa-edit"></i>
+                </a>
+                <form
+                  action="/barang/delete/<%= item.id %>"
+                  method="POST"
+                  style="display: inline"
+                  onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?');"
+                >
+                  <button type="submit" class="btn btn-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            <% }); %> <% } else { %>
+            <tr>
+              <td colspan="7" class="text-center">Tidak ada data</td>
+            </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

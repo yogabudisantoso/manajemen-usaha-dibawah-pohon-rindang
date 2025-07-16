@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pemasukanController = require("../controllers/pemasukanController");
 const auth = require("../middleware/auth");
+const isAuthenticated = require("../middleware/isAuthenticated");
 const Usaha = require("../models/Usaha"); // Import model Usaha
 // const authorize = require('../middleware/authorize'); // Middleware untuk otorisasi role
 
@@ -36,6 +37,6 @@ router.get("/:id", auth, pemasukanController.getPemasukanById);
 router.put("/:id", auth, pemasukanController.updatePemasukan);
 
 // Route untuk menghapus data pemasukan
-router.delete("/:id", auth, pemasukanController.deletePemasukan);
+router.delete("/:id", isAuthenticated, pemasukanController.deletePemasukan);
 
 module.exports = router;

@@ -86,7 +86,7 @@ class Pemasukan {
 
   static async delete(id) {
     const query = "DELETE FROM pemasukan WHERE id = ?";
-    const result = await db.query(query, [id]);
+    const [result] = await db.query(query, [id]);
     return result.affectedRows > 0;
   }
 }
