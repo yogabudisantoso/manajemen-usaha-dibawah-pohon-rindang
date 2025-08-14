@@ -118,6 +118,49 @@ class Menu {
     }
   }
 
+  static async reduceStock(id, quantity) {
+    try {
+      console.log(`=== REDUCE STOCK START ===`);
+      console.log(`Menu ID: ${id}, Quantity to reduce: ${quantity}`);
+      
+      if (!id || !quantity || quantity <= 0) {
+        throw new Error("ID menu dan jumlah harus diisi dengan nilai positif");
+      }
+
+      // Cek stok saat ini
+      const menu = await this.findById(id);
+      if (!menu) {
+        throw new Error("Menu tidak ditemukan");
+      }
+
+      console.log(`Found menu: ${menu.nama_menu}, Current stock: ${menu.stok}`);
+
+      if (menu.stok < quantity) {
+        throw new Error(`Stok tidak mencukupi. Stok tersedia: ${menu.stok}, diminta: ${quantity}`);
+      }
+
+      // Kurangi stok
+      console.log(`Executing stock reduction query...`);
+      const [result] = await db.query(
+        "UPDATE menu_makanan SET stok = stok - ? WHERE id = ? AND stok >= ?",
+        [quantity, id, quantity]
+      );
+
+      console.log(`Query result:`, result);
+      console.log(`Affected rows: ${result.affectedRows}`);
+
+      if (result.affectedRows === 0) {
+        throw new Error("Gagal mengurangi stok. Mungkin stok tidak mencukupi");
+      }
+
+      console.log(`=== REDUCE STOCK SUCCESS ===`);
+      return true;
+    } catch (error) {
+      console.error(`=== REDUCE STOCK ERROR ===`, error);
+      throw new Error(`Gagal mengurangi stok: ${error.message}`);
+    }
+  }
+
   static async getAllUsaha() {
     try {
       const [rows] = await db.execute(

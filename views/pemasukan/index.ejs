@@ -22,7 +22,6 @@
             <th>Jumlah Total</th>
             <th>Total Harga</th>
             <th>Usaha</th>
-            <th>Aksi</th>
           </tr>
         </thead>
         <tfoot>
@@ -32,7 +31,6 @@
             <th>Jumlah Total</th>
             <th>Total Harga</th>
             <th>Usaha</th>
-            <th>Aksi</th>
           </tr>
         </tfoot>
         <tbody>
@@ -55,18 +53,10 @@
               minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
             </td>
             <td><%= group.nama_usaha || '-' %></td>
-            <td>
-              <button
-                onclick="deletePemasukanGroup('<%= group.pemasukanIds.join(',') %>')"
-                class="btn btn-danger btn-sm"
-              >
-                Hapus Pesanan
-              </button>
-            </td>
           </tr>
           <% }); %> <% } else { %>
           <tr>
-            <td colspan="6" class="text-center">Belum ada data pemasukan.</td>
+            <td colspan="5" class="text-center">Belum ada data pemasukan.</td>
           </tr>
           <% } %>
         </tbody>

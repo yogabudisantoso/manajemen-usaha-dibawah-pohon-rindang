@@ -28,6 +28,7 @@
             <th>Nama Menu</th>
             <th>Usaha</th>
             <th>Harga</th>
+            <th>Stok</th>
             <th>Gambar</th>
             <th>Aksi</th>
           </tr>
@@ -37,6 +38,7 @@
             <th>Nama Menu</th>
             <th>Usaha</th>
             <th>Harga</th>
+            <th>Stok</th>
             <th>Gambar</th>
             <th>Aksi</th>
           </tr>
@@ -51,6 +53,7 @@
               <%= item.harga ? 'Rp ' + item.harga.toLocaleString('id-ID') : '-'
               %>
             </td>
+            <td><%= item.stok || '0' %></td>
             <td>
               <% if (item.gambar) { %>
               <img
@@ -84,7 +87,7 @@
           </tr>
           <% }); %> <% } else { %>
           <tr>
-            <td colspan="5" class="text-center">
+            <td colspan="6" class="text-center">
               Belum ada data menu makanan.
             </td>
           </tr>

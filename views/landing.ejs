@@ -56,10 +56,12 @@
                 value="<%= menu.id %>"
                 data-harga="<%= menu.harga %>"
                 data-nama="<%= menu.nama_menu %>"
+                data-stok="<%= menu.stok %>"
+                <% if (menu.stok <= 0) { %>disabled<% } %>
               >
                 <%= menu.nama_menu %> - Rp <%=
                 menu.harga.toLocaleString('id-ID', {minimumFractionDigits: 0})
-                %>
+                %> (Stok: <%= menu.stok %>)
               </option>
               <% }); %> <% } %>
             </select>
@@ -159,8 +161,18 @@
 
       function increaseQuantity(button) {
         const input = button.parentElement.querySelector(".quantity-input");
-        input.value = parseInt(input.value) + 1;
-        updateTotal();
+        const menuItem = button.closest('.menu-item');
+        const select = menuItem.querySelector('.menu-select');
+        const selectedOption = select.options[select.selectedIndex];
+        const availableStock = parseInt(selectedOption.dataset.stok || 0);
+        const currentValue = parseInt(input.value);
+        
+        if (currentValue < availableStock) {
+          input.value = currentValue + 1;
+          updateTotal();
+        } else {
+          alert(`Stok tidak mencukupi. Maksimal ${availableStock} item.`);
+        }
       }
 
       function decreaseQuantity(button) {
@@ -172,6 +184,21 @@
       }
 
       function updatePrice(select) {
+        const menuItem = select.closest('.menu-item');
+        const quantityInput = menuItem.querySelector('.quantity-input');
+        const selectedOption = select.options[select.selectedIndex];
+        const availableStock = parseInt(selectedOption.dataset.stok || 0);
+        
+        // Reset quantity to 1 when menu changes
+        quantityInput.value = 1;
+        
+        // Set max attribute based on available stock
+        if (availableStock > 0) {
+          quantityInput.setAttribute('max', availableStock);
+        } else {
+          quantityInput.setAttribute('max', 0);
+        }
+        
         updateTotal();
       }
 
@@ -242,12 +269,16 @@
           const data = await response.json();
 
           if (response.ok) {
-            alert("Pesanan berhasil diproses!");
+            alert("Pesanan berhasil diproses! Stok menu telah diperbarui.");
             // Reset form
             const menuItems = document.getElementById("menu-items");
             menuItems.innerHTML = ""; // Kosongkan item yang sudah ada
             addMenuItem(); // Tambahkan satu baris menu kosong baru
             updateTotal();
+            // Refresh halaman untuk memperbarui stok yang tersedia
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
           } else {
             alert(data.message || "Terjadi kesalahan saat memproses pesanan");
           }
@@ -257,5 +288,104 @@
         }
       }
     </script>
+
+    <!-- Tabel Pemasukan -->
+    <div class="container mx-auto px-4 sm:px-8 py-8">
+      <div class="py-8">
+        <div>
+          <h2 class="text-2xl font-semibold leading-tight">Riwayat Pemasukan</h2>
+        </div>
+        <div class="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto">
+          <div
+            class="inline-block min-w-full shadow rounded-lg overflow-hidden"
+          >
+            <table class="min-w-full leading-normal">
+              <thead>
+                <tr>
+                  <th
+                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  >
+                    Tanggal
+                  </th>
+                  <th
+                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  >
+                    Pesanan
+                  </th>
+                  <th
+                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  >
+                    Jumlah Total
+                  </th>
+                  <th
+                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  >
+                    Total Harga
+                  </th>
+                  <th
+                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                  >
+                    Usaha
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (pemasukan && pemasukan.length > 0) { %> <%
+                pemasukan.forEach(function(group) { %>
+                <tr>
+                  <td
+                    class="px-5 py-5 border-b border-gray-200 bg-white text-sm"
+                  >
+                    <p class="text-gray-900 whitespace-no-wrap">
+                      <%= new Date(group.waktu_transaksi).toLocaleDateString('id-ID') %>
+                    </p>
+                  </td>
+                  <td
+                    class="px-5 py-5 border-b border-gray-200 bg-white text-sm"
+                  >
+                    <% group.items.forEach(function(item) { %>
+                    <p class="text-gray-900 whitespace-no-wrap">
+                      <%= item.nama_menu %> (<%= item.jumlah %>)
+                    </p>
+                    <% }); %>
+                  </td>
+                  <td
+                    class="px-5 py-5 border-b border-gray-200 bg-white text-sm"
+                  >
+                    <p class="text-gray-900 whitespace-no-wrap">
+                      <%= group.items.reduce((total, item) => total + item.jumlah, 0) %>
+                    </p>
+                  </td>
+                  <td
+                    class="px-5 py-5 border-b border-gray-200 bg-white text-sm"
+                  >
+                    <p class="text-gray-900 whitespace-no-wrap">
+                      Rp <%= group.total_harga.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) %>
+                    </p>
+                  </td>
+                  <td
+                    class="px-5 py-5 border-b border-gray-200 bg-white text-sm"
+                  >
+                    <p class="text-gray-900 whitespace-no-wrap">
+                      <%= group.nama_usaha || '-' %>
+                    </p>
+                  </td>
+                </tr>
+                <% }); %> <% } else { %>
+                <tr>
+                  <td
+                    colspan="5"
+                    class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center"
+                  >
+                    Belum ada data pemasukan.
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

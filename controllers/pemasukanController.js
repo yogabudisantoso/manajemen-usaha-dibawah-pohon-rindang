@@ -3,10 +3,12 @@ const Menu = require("../models/Menu");
 
 exports.createPemasukan = async (req, res) => {
   try {
+    console.log("=== PEMASUKAN CONTROLLER START ===");
     console.log("REQ BODY PEMASUKAN:", req.body); // LOG REQUEST BODY
     // Menerima array items dari frontend
     const items = req.body.items;
     const user_id = req.session.user ? req.session.user.id : 1; // Ganti dengan cara Anda mendapatkan user ID
+    console.log("Items to process:", items);
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
@@ -20,8 +22,32 @@ exports.createPemasukan = async (req, res) => {
     for (const item of items) {
       const { menu_id, jumlah } = item;
       if (!menu_id || !jumlah || jumlah <= 0) continue;
+      
       const menu = await Menu.findById(menu_id);
       if (!menu || !menu.harga || menu.harga <= 1) continue; // validasi harga
+      
+      // Validasi stok sebelum memproses pesanan
+      if (menu.stok < jumlah) {
+        return res.status(400).json({
+          message: `Stok ${menu.nama_menu} tidak mencukupi. Stok tersedia: ${menu.stok}, diminta: ${jumlah}`,
+          status: "error",
+        });
+      }
+      
+      // Kurangi stok
+      console.log(`Attempting to reduce stock for menu_id: ${menu_id}, quantity: ${jumlah}`);
+      console.log(`Current stock before reduction: ${menu.stok}`);
+      try {
+        await Menu.reduceStock(menu_id, jumlah);
+        console.log(`Stock reduction successful for menu: ${menu.nama_menu}`);
+      } catch (stockError) {
+        console.error(`Stock reduction failed: ${stockError.message}`);
+        return res.status(400).json({
+          message: `Gagal mengurangi stok untuk ${menu.nama_menu}: ${stockError.message}`,
+          status: "error",
+        });
+      }
+      
       const harga_satuan = Number(menu.harga);
       const total_harga_item = harga_satuan * jumlah;
       const usaha_id = menu.usaha_id || 1;

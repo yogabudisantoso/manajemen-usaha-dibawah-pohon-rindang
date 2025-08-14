@@ -97,6 +97,10 @@ app.get("/landing", async (req, res) => {
 
     const usahaList = await Usaha.getAllUsaha(); // Ambil daftar semua usaha
     const menuItems = await menuController.getAllMenuItems(userUsahaId); // Teruskan userUsahaId ke getAllMenuItems
+    
+    // Ambil data pemasukan
+    const pemasukan = await pemasukanController.getAllPemasukan({ query: { usaha_id: userUsahaId } }, {});
+
 
     // Kelompokkan menu berdasarkan usaha
     const menuByUsaha = {};
@@ -116,6 +120,7 @@ app.get("/landing", async (req, res) => {
       usahaList: Object.values(menuByUsaha), // Kirim usahaList dengan menu yang sudah dikelompokkan
       menuItems: menuItems, // Kirim juga menuItems yang rata untuk form pemesanan yang sudah ada
       userUsahaName: req.session.user ? req.session.user.usaha : null, // Tambahkan nama usaha dari sesi
+      pemasukan: pemasukan, // Kirim data pemasukan ke view
     });
   } catch (error) {
     console.error("Error fetching data for landing page:", error);
