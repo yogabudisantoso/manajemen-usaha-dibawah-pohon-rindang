@@ -8,7 +8,7 @@ const formatRupiah = (number) => {
 
 exports.createBarang = async (req, res) => {
   try {
-    const { nama_barang, harga_beli, harga_jual } = req.body;
+    const { nama_barang, harga_beli } = req.body;
 
     // Validasi input
     if (!nama_barang) {
@@ -24,7 +24,6 @@ exports.createBarang = async (req, res) => {
     const barangId = await Barang.create({
       nama_barang,
       harga_beli,
-      harga_jual,
     });
     res.status(201).json({
       message: "Barang berhasil ditambahkan",
@@ -72,7 +71,7 @@ exports.getBarangById = async (req, res) => {
 exports.updateBarang = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama_barang, harga_beli, harga_jual } = req.body;
+    const { nama_barang, harga_beli } = req.body;
 
     // Cek apakah barang ada
     const existingBarang = await Barang.findById(id);
@@ -88,7 +87,7 @@ exports.updateBarang = async (req, res) => {
       }
     }
 
-    const barangData = { nama_barang, harga_beli, harga_jual };
+    const barangData = { nama_barang, harga_beli };
 
     const updated = await Barang.update(id, barangData);
 
@@ -144,7 +143,6 @@ exports.index = async (req, res) => {
     const formattedBarang = barang.map((item) => ({
       ...item,
       harga_beli: formatRupiah(item.harga_beli),
-      harga_jual: formatRupiah(item.harga_jual),
     }));
 
     res.render("barang/index", {
@@ -176,7 +174,7 @@ exports.create = async (req, res) => {
 // Menyimpan data barang baru
 exports.store = async (req, res) => {
   try {
-    const { nama_barang, harga_beli, harga_jual, usaha_id } = req.body;
+    const { nama_barang, harga_beli, usaha_id } = req.body;
     console.log("DATA YANG DIKIRIM:", req.body);
 
     if (!usaha_id) {
@@ -190,8 +188,8 @@ exports.store = async (req, res) => {
     }
 
     await db.query(
-      "INSERT INTO barang (nama_barang, harga_beli, harga_jual, usaha_id) VALUES (?, ?, ?, ?)",
-      [nama_barang, harga_beli, harga_jual, usaha_id]
+      "INSERT INTO barang (nama_barang, harga_beli, usaha_id) VALUES (?, ?, ?)",
+      [nama_barang, harga_beli, usaha_id]
     );
 
     res.redirect("/barang");
@@ -234,11 +232,11 @@ exports.edit = async (req, res) => {
 // Mengupdate data barang
 exports.update = async (req, res) => {
   try {
-    const { nama_barang, harga_beli, harga_jual, usaha_id } = req.body;
+    const { nama_barang, harga_beli, usaha_id } = req.body;
 
     await db.query(
-      "UPDATE barang SET nama_barang = ?, harga_beli = ?, harga_jual = ?, usaha_id = ? WHERE id = ?",
-      [nama_barang, harga_beli, harga_jual, usaha_id, req.params.id]
+      "UPDATE barang SET nama_barang = ?, harga_beli = ?, usaha_id = ? WHERE id = ?",
+      [nama_barang, harga_beli, usaha_id, req.params.id]
     );
 
     res.redirect("/barang");

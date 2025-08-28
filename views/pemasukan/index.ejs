@@ -1,6 +1,6 @@
 <!-- Page Heading -->
-<h1 class="h3 mb-2 text-gray-800">Data Pemasukan</h1>
-<p class="mb-4">Halaman ini menampilkan data pemasukan dari pesanan menu.</p>
+<h1 class="h3 mb-2 text-gray-800">Data Pemasukan Hari Ini</h1>
+<p class="mb-4">Halaman ini menampilkan data pemasukan hari ini (<%= new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>).</p>
 
 <!-- DataTales Example -->
 <div class="card shadow mb-4">
@@ -56,7 +56,7 @@
           </tr>
           <% }); %> <% } else { %>
           <tr>
-            <td colspan="5" class="text-center">Belum ada data pemasukan.</td>
+            <td colspan="5" class="text-center">Belum ada pemasukan hari ini.</td>
           </tr>
           <% } %>
         </tbody>

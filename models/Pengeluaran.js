@@ -103,6 +103,87 @@ class Pengeluaran {
     return result.affectedRows > 0;
   }
 
+  // Method untuk menghitung total biaya pengeluaran
+  static async getTotalCost(usahaId = null, startDate = null, endDate = null) {
+    let query = `SELECT SUM(total_biaya_item) as total_cost FROM pengeluaran_barang pb`;
+    const params = [];
+    const conditions = [];
+
+    if (usahaId) {
+      conditions.push(`pb.usaha_id = ?`);
+      params.push(usahaId);
+    }
+
+    if (startDate) {
+      conditions.push(`pb.tanggal >= ?`);
+      params.push(startDate);
+    }
+
+    if (endDate) {
+      conditions.push(`pb.tanggal <= ?`);
+      params.push(endDate);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
+    const [rows] = await db.execute(query, params);
+    return rows[0].total_cost || 0;
+  }
+
+  // Method untuk menghitung total biaya per usaha
+  static async getTotalCostByUsaha() {
+    const query = `
+      SELECT 
+        us.id,
+        us.nama_usaha,
+        COALESCE(SUM(pb.total_biaya_item), 0) as total_cost,
+        COUNT(pb.id) as total_items
+      FROM usaha us
+      LEFT JOIN pengeluaran_barang pb ON us.id = pb.usaha_id
+      GROUP BY us.id, us.nama_usaha
+      ORDER BY total_cost DESC
+    `;
+    
+    const [rows] = await db.execute(query);
+    return rows;
+  }
+
+  // Method untuk menghitung total biaya per periode (bulanan)
+  static async getTotalCostByMonth(year = null, usahaId = null) {
+    let query = `
+      SELECT 
+        YEAR(pb.tanggal) as year,
+        MONTH(pb.tanggal) as month,
+        MONTHNAME(pb.tanggal) as month_name,
+        SUM(pb.total_biaya_item) as total_cost,
+        COUNT(pb.id) as total_items
+      FROM pengeluaran_barang pb
+    `;
+    const params = [];
+    const conditions = [];
+
+    if (year) {
+      conditions.push(`YEAR(pb.tanggal) = ?`);
+      params.push(year);
+    }
+
+    if (usahaId) {
+      conditions.push(`pb.usaha_id = ?`);
+      params.push(usahaId);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
+    query += ` GROUP BY YEAR(pb.tanggal), MONTH(pb.tanggal) ORDER BY year DESC, month DESC`;
+
+    const [rows] = await db.execute(query, params);
+    return rows;
+  }
+
   // Metode lain seperti findByBarangId, findByUserId, findByDateRange bisa ditambahkan
 }
 

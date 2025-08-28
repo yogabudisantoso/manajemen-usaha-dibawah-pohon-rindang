@@ -2,10 +2,10 @@ const db = require("../config/database");
 
 class Barang {
   static async create(barangData) {
-    const { nama_barang, harga_beli, harga_jual, usaha_id } = barangData;
+    const { nama_barang, harga_beli, usaha_id } = barangData;
     const [result] = await db.execute(
-      "INSERT INTO barang (nama_barang, harga_beli, harga_jual, usaha_id) VALUES (?, ?, ?, ?)",
-      [nama_barang, harga_beli, harga_jual, usaha_id]
+      "INSERT INTO barang (nama_barang, harga_beli, usaha_id) VALUES (?, ?, ?)",
+      [nama_barang, harga_beli, usaha_id]
     );
     return result.insertId;
   }
@@ -51,10 +51,10 @@ class Barang {
   }
 
   static async update(id, barangData) {
-    const { nama_barang, harga_beli, harga_jual, usaha_id } = barangData;
+    const { nama_barang, harga_beli, usaha_id } = barangData;
     const [result] = await db.execute(
-      "UPDATE barang SET nama_barang = ?, harga_beli = ?, harga_jual = ?, usaha_id = ? WHERE id = ?",
-      [nama_barang, harga_beli, harga_jual, usaha_id, id]
+      "UPDATE barang SET nama_barang = ?, harga_beli = ?, usaha_id = ? WHERE id = ?",
+      [nama_barang, harga_beli, usaha_id, id]
     );
     return result.affectedRows > 0;
   }

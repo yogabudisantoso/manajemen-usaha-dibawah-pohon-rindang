@@ -52,10 +52,45 @@
                     <label for="harga_beli_satuan">Harga Beli Satuan</label>
                     <input type="number" class="form-control" id="harga_beli_satuan" name="harga_beli_satuan" value="<%= pengeluaran.harga_beli_satuan %>" required>
                 </div>
+                <div class="form-group">
+                    <label for="total_biaya">Total Biaya</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="total_biaya"
+                        name="total_biaya"
+                        readonly
+                        style="background-color: #f8f9fa; font-weight: bold;"
+                        placeholder="Rp 0"
+                    />
+                </div>
                 <button type="submit" class="btn btn-primary">Update</button>
                 <a href="/pengeluaran" class="btn btn-secondary">Kembali</a>
             </form>
         </div>
     </div>
 </div>
-<!-- /.container-fluid --> 
+<!-- /.container-fluid -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const jumlahInput = document.getElementById('jumlah');
+    const hargaBeliInput = document.getElementById('harga_beli_satuan');
+    const totalInput = document.getElementById('total_biaya');
+    
+    function calculateTotal() {
+        const jumlah = parseFloat(jumlahInput.value) || 0;
+        const harga = parseFloat(hargaBeliInput.value) || 0;
+        const total = jumlah * harga;
+        
+        // Format as Indonesian Rupiah
+        totalInput.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+    }
+    
+    // Calculate initial total
+    calculateTotal();
+    
+    jumlahInput.addEventListener('input', calculateTotal);
+    hargaBeliInput.addEventListener('input', calculateTotal);
+});
+</script>

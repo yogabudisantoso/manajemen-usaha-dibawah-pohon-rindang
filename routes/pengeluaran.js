@@ -36,4 +36,7 @@ router.post(
   pengeluaranController.deletePengeluaran
 );
 
+// Route untuk API total biaya
+router.get("/api/total-cost", pengeluaranController.getTotalCostAPI);
+
 module.exports = router;

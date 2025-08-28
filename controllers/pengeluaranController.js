@@ -13,8 +13,8 @@ const formatRupiah = (number) => {
 
 exports.recordPengeluaranBarang = async (req, res) => {
   try {
-    // Mengambil barang_id, jumlah, dan usaha_id dari body permintaan
-    const { barang_id, jumlah, usaha_id, tanggal } = req.body; // Hapus keterangan
+    // Mengambil barang_id, jumlah, harga_beli_satuan, dan usaha_id dari body permintaan
+    const { barang_id, jumlah, harga_beli_satuan, usaha_id, tanggal } = req.body;
     // Mengambil user_id dari sesi yang terautentikasi
     const user_id = req.session.user ? req.session.user.id : null;
 
@@ -24,8 +24,7 @@ exports.recordPengeluaranBarang = async (req, res) => {
     }
 
     // Validasi input
-    if (!barang_id || !jumlah || jumlah <= 0 || !usaha_id) {
-      // Tambahkan validasi usaha_id
+    if (!barang_id || !jumlah || jumlah <= 0 || !harga_beli_satuan || harga_beli_satuan <= 0 || !usaha_id) {
       // Render ulang halaman create dengan pesan error dan data yang sudah ada (jika ini dari form)
       const barang = (await Barang.findAll()) || [];
       const [usaha] = (await db.query("SELECT * FROM usaha")) || [];
@@ -33,7 +32,7 @@ exports.recordPengeluaranBarang = async (req, res) => {
         title: "Tambah Pengeluaran",
         barang: barang,
         usaha: usaha, // Teruskan data usaha
-        error: "ID barang, jumlah beli yang valid, dan usaha harus diisi",
+        error: "ID barang, jumlah beli, harga beli satuan yang valid, dan usaha harus diisi",
         // Isi kembali nilai-nilai form yang sudah diisi pengguna
         old: req.body,
       });
@@ -54,17 +53,17 @@ exports.recordPengeluaranBarang = async (req, res) => {
       });
     }
 
-    // Gunakan harga beli dari tabel barang saat ini
-    const harga_beli_satuan = barangData.harga_beli;
-    // Hitung total biaya item menggunakan jumlah dari body permintaan
-    const total_biaya_item = harga_beli_satuan * jumlah;
+    // Gunakan harga beli dari form input (bukan dari tabel barang)
+    const harga_beli_input = parseFloat(harga_beli_satuan);
+    // Hitung total biaya item menggunakan jumlah dan harga dari form
+    const total_biaya_item = harga_beli_input * parseInt(jumlah);
 
     // Catat pengeluaran
     const pengeluaranData = {
       barang_id,
       user_id,
-      jumlah_beli: jumlah,
-      harga_beli_satuan,
+      jumlah_beli: parseInt(jumlah),
+      harga_beli_satuan: harga_beli_input,
       total_biaya_item,
       tanggal: tanggal ? new Date(tanggal) : new Date(),
       usaha_id, // Tambahkan usaha_id
@@ -218,15 +217,14 @@ exports.renderEditPengeluaranPage = async (req, res) => {
 exports.updatePengeluaranForm = async (req, res) => {
   try {
     const { id } = req.params;
-    const { barang_id, jumlah, tanggal, usaha_id } = req.body; // Hapus keterangan
+    const { barang_id, jumlah, harga_beli_satuan, tanggal, usaha_id } = req.body;
     const user_id = req.session.user ? req.session.user.id : null;
 
     if (!user_id) {
       return res.status(401).send("Pengguna tidak terautentikasi");
     }
 
-    if (!barang_id || !jumlah || jumlah <= 0 || !usaha_id) {
-      // Validasi usaha_id
+    if (!barang_id || !jumlah || jumlah <= 0 || !harga_beli_satuan || harga_beli_satuan <= 0 || !usaha_id) {
       const barang = (await Barang.findAll()) || [];
       const [usaha] = (await db.query("SELECT * FROM usaha")) || [];
       const pengeluaranItem = await Pengeluaran.findById(id);
@@ -235,7 +233,7 @@ exports.updatePengeluaranForm = async (req, res) => {
         pengeluaran: { ...pengeluaranItem, ...req.body },
         barang: barang,
         usaha: usaha,
-        error: "ID barang, jumlah beli yang valid, dan usaha harus diisi",
+        error: "ID barang, jumlah beli, harga beli satuan yang valid, dan usaha harus diisi",
       });
     }
 
@@ -253,14 +251,14 @@ exports.updatePengeluaranForm = async (req, res) => {
       });
     }
 
-    const harga_beli_satuan = barangData.harga_beli;
-    const total_biaya_item = harga_beli_satuan * jumlah;
+    const harga_beli_input = parseFloat(harga_beli_satuan);
+    const total_biaya_item = harga_beli_input * parseInt(jumlah);
 
     const updated = await Pengeluaran.update(id, {
       barang_id,
       user_id,
-      jumlah_beli: jumlah,
-      harga_beli_satuan,
+      jumlah_beli: parseInt(jumlah),
+      harga_beli_satuan: harga_beli_input,
       total_biaya_item,
       tanggal: tanggal ? new Date(tanggal) : new Date(),
       usaha_id, // Teruskan usaha_id
@@ -291,5 +289,28 @@ exports.deletePengeluaran = async (req, res) => {
   } catch (error) {
     console.error("Error saat menghapus pengeluaran:", error);
     res.status(500).send("Terjadi kesalahan saat menghapus data pengeluaran");
+  }
+};
+
+// API endpoint untuk mendapatkan total biaya
+exports.getTotalCostAPI = async (req, res) => {
+  try {
+    const { usaha_id, start_date, end_date } = req.query;
+    const totalCost = await Pengeluaran.getTotalCost(usaha_id, start_date, end_date);
+    const totalCostByUsaha = await Pengeluaran.getTotalCostByUsaha();
+    const totalCostByMonth = await Pengeluaran.getTotalCostByMonth(null, usaha_id);
+
+    res.json({
+      message: "Data total biaya berhasil diambil",
+      data: {
+        totalCost: totalCost,
+        totalCostFormatted: formatRupiah(totalCost),
+        totalCostByUsaha: totalCostByUsaha,
+        totalCostByMonth: totalCostByMonth
+      }
+    });
+  } catch (error) {
+    console.error("Error in getTotalCostAPI:", error);
+    res.status(500).json({ message: "Terjadi kesalahan server" });
   }
 };

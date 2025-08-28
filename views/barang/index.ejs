@@ -26,7 +26,6 @@
               <th>Nama Barang</th>
               <th>Usaha</th>
               <th>Harga Beli</th>
-              <th>Harga Jual</th>
               <th>Aksi</th>
             </tr>
           </thead>
@@ -38,7 +37,6 @@
               <td><%= item.nama_barang %></td>
               <td><%= item.nama_usaha || '-' %></td>
               <td>Rp <%= item.harga_beli.toLocaleString() %></td>
-              <td>Rp <%= item.harga_jual.toLocaleString() %></td>
               <td>
                 <a
                   href="/barang/edit/<%= item.id %>"
@@ -60,7 +58,7 @@
             </tr>
             <% }); %> <% } else { %>
             <tr>
-              <td colspan="7" class="text-center">Tidak ada data</td>
+              <td colspan="5" class="text-center">Tidak ada data</td>
             </tr>
             <% } %>
           </tbody>

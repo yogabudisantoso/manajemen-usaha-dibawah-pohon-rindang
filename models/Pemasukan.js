@@ -32,11 +32,12 @@ class Pemasukan {
       FROM pemasukan p
       LEFT JOIN menu_makanan m ON p.menu_id = m.id
       LEFT JOIN usaha u ON p.usaha_id = u.id
+      WHERE DATE(p.waktu_transaksi) = CURDATE()
     `;
 
     const params = [];
     if (usahaId) {
-      query += ` WHERE p.usaha_id = ?`;
+      query += ` AND p.usaha_id = ?`;
       params.push(usahaId);
     }
 
