@@ -1,5 +1,10 @@
 const Menu = require("../models/Menu");
 const db = require("../config/database"); // Import db di sini
+const Barang = require("../models/Barang");
+const MenuBahan = require("../models/MenuBahan");
+const { parseKomposisiPayload } = require("../utils/komposisi");
+
+const UNIT_OPTIONS = ["gram", "ml", "pcs", "lembar", "butir", "liter", "pack"];
 
 // Fungsi helper untuk format angka menjadi mata uang (misal: 1000000 -> 1.000.000)
 const formatRupiah = (number) => {
@@ -17,7 +22,7 @@ exports.createMenu = async (req, res) => {
     const stok = parseInt(req.body.stok, 10);
     const gambar = req.file ? "/uploads/" + req.file.filename : ""; // Path relatif atau string kosong
 
-    // Validasi input dasar (termasuk memeriksa hasil konversi)
+    // Validasi input dasar (termasuk memeriksa hasil konversi) dan komposisi
     if (!nama_menu || isNaN(harga) || harga <= 0 || isNaN(stok) || stok < 0) {
       console.log("Validasi gagal setelah konversi.");
       let message = "Nama menu, harga, dan stok harus diisi dengan benar.";
@@ -27,14 +32,36 @@ exports.createMenu = async (req, res) => {
         message = "Stok harus berupa angka non-negatif.";
       if (!nama_menu) message = "Nama menu harus diisi.";
 
-      // Jika ini permintaan AJAX/API, kirim respons JSON
       if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
-        return res.status(400).json({
-          message: message,
-          status: "error",
-        });
+        return res.status(400).json({ message, status: "error" });
       }
-      // Jika ini form submit biasa, kirim pesan error
+      return res.status(400).send(message);
+    }
+
+    let komposisi;
+    try {
+      komposisi = parseKomposisiPayload(req.body.items);
+    } catch (parseError) {
+      const message = parseError.message || "Komposisi bahan tidak valid.";
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        return res.status(400).json({ message, status: "error" });
+      }
+      return res.status(400).send(message);
+    }
+    if (!komposisi.length) {
+      const message =
+        "Komposisi bahan wajib diisi minimal satu bahan dengan jumlah > 0.";
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        return res.status(400).json({ message, status: "error" });
+      }
+      return res.status(400).send(message);
+    }
+    const missingUnit = komposisi.some((item) => !item.satuan);
+    if (missingUnit) {
+      const message = "Setiap bahan wajib memiliki satuan (misal: gram, pcs).";
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        return res.status(400).json({ message, status: "error" });
+      }
       return res.status(400).send(message);
     }
 
@@ -45,34 +72,66 @@ exports.createMenu = async (req, res) => {
       stok,
       gambar,
       usaha_id,
+      komposisi,
     });
 
-    const menuId = await Menu.create({
-      nama_menu,
-      deskripsi,
-      harga,
-      stok,
-      gambar,
-      usaha_id,
-    });
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    // Jika ini permintaan AJAX/API, kirim respons JSON
-    if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
-      const createdMenu = await Menu.findById(menuId);
-      return res.status(201).json({
-        message: "Menu makanan berhasil ditambahkan",
-        status: "success",
-        data: createdMenu,
-      });
+      const uniqueBarangIds = [...new Set(komposisi.map((i) => i.barang_id))];
+      if (uniqueBarangIds.length === 0) {
+        throw new Error("Komposisi bahan tidak valid.");
+      }
+      const [barangRows] = await connection.query(
+        `SELECT id FROM barang WHERE id IN (?)`,
+        [uniqueBarangIds]
+      );
+      if (barangRows.length !== uniqueBarangIds.length) {
+        throw new Error("Terdapat bahan yang tidak terdaftar.");
+      }
+
+      const menuId = await Menu.create(
+        {
+          nama_menu,
+          deskripsi,
+          harga,
+          stok,
+          gambar,
+          usaha_id,
+        },
+        connection
+      );
+
+      await MenuBahan.replaceForMenu(menuId, komposisi, connection);
+      await connection.commit();
+
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        const createdMenu = await Menu.findById(menuId);
+        return res.status(201).json({
+          message: "Menu makanan berhasil ditambahkan",
+          status: "success",
+          data: createdMenu,
+        });
+      }
+
+      console.log(
+        "Data menu berhasil disimpan dengan ID:",
+        menuId,
+        " - Melakukan redirect ke /menu"
+      );
+      res.redirect("/menu");
+    } catch (err) {
+      await connection.rollback();
+      console.error("Gagal menyimpan menu:", err);
+      const message = err.message || "Terjadi kesalahan saat menyimpan menu.";
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        return res.status(400).json({ message, status: "error" });
+      }
+      return res.status(400).send(message);
+    } finally {
+      connection.release();
     }
-
-    // Jika ini form submit biasa, lakukan redirect
-    console.log(
-      "Data menu berhasil disimpan dengan ID:",
-      menuId,
-      " - Melakukan redirect ke /menu"
-    );
-    res.redirect("/menu");
   } catch (error) {
     console.error("Error dalam createMenu controller:", error);
     const errorMessage = error.message.startsWith("Gagal membuat menu:")
@@ -182,20 +241,74 @@ exports.updateMenu = async (req, res) => {
       gambar,
       usaha_id,
     };
-    const updated = await Menu.update(id, menuData);
 
-    if (updated) {
-      // Redirect ke halaman daftar menu setelah sukses update
-      res.redirect("/menu");
-    } else {
-      // Jika tidak ada baris terpengaruh tapi tidak ada error, mungkin data yang dikirim sama dengan yang sudah ada
+    let komposisi;
+    try {
+      komposisi = parseKomposisiPayload(req.body.items);
+    } catch (parseError) {
+      const message = parseError.message || "Komposisi bahan tidak valid.";
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        return res.status(400).json({ message, status: "error" });
+      }
+      return res.status(400).send(message);
+    }
+    if (!komposisi.length) {
+      const message =
+        "Komposisi bahan wajib diisi minimal satu bahan dengan jumlah > 0.";
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        return res.status(400).json({ message, status: "error" });
+      }
+      return res.status(400).send(message);
+    }
+    const missingUnit = komposisi.some((item) => !item.satuan);
+    if (missingUnit) {
+      const message = "Setiap bahan wajib memiliki satuan (misal: gram, pcs).";
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        return res.status(400).json({ message, status: "error" });
+      }
+      return res.status(400).send(message);
+    }
+
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const uniqueBarangIds = [...new Set(komposisi.map((i) => i.barang_id))];
+      if (uniqueBarangIds.length === 0) {
+        throw new Error("Komposisi bahan tidak valid.");
+      }
+      const [barangRows] = await connection.query(
+        `SELECT id FROM barang WHERE id IN (?)`,
+        [uniqueBarangIds]
+      );
+      if (barangRows.length !== uniqueBarangIds.length) {
+        throw new Error("Terdapat bahan yang tidak terdaftar.");
+      }
+
+      await Menu.update(id, menuData, connection);
+      await MenuBahan.replaceForMenu(id, komposisi, connection);
+      await connection.commit();
+    } catch (err) {
+      await connection.rollback();
+      const message = err.message || "Terjadi kesalahan saat memperbarui menu.";
+      if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
+        return res.status(400).json({ message, status: "error" });
+      }
+      return res.status(400).send(message);
+    } finally {
+      connection.release();
+    }
+
+    if (req.xhr || req.headers["x-requested-with"] === "XMLHttpRequest") {
       const updatedMenu = await Menu.findById(id);
-      res.status(200).json({
-        message: "Tidak ada perubahan pada data menu",
+      return res.status(200).json({
+        message: "Menu berhasil diperbarui",
         status: "success",
         data: updatedMenu,
       });
     }
+
+    res.redirect("/menu");
   } catch (error) {
     console.error("Error dalam updateMenu controller:", error);
     const errorMessage = error.message.startsWith("Gagal mengupdate menu:")
@@ -293,9 +406,12 @@ exports.getMenuForEdit = async (id) => {
 exports.renderCreateMenuForm = async (req, res) => {
   try {
     const usahaList = await Menu.getAllUsaha();
+    const barangList = await Barang.findAll();
     res.render("pages/menu/create", {
       title: "Tambah Menu Makanan",
       usahaList,
+      barangList,
+      unitOptions: UNIT_OPTIONS,
     });
   } catch (error) {
     console.error("Error in renderCreateMenuForm (catch block):", error);
@@ -315,10 +431,23 @@ exports.renderEditMenuForm = async (req, res) => {
       return res.status(404).send("Menu makanan tidak ditemukan");
     }
 
+    const barangList = await Barang.findAll();
+    const bahanList = await MenuBahan.findByMenuId(id);
+    const bahanMap = {};
+    bahanList.forEach((bahan) => {
+      bahanMap[bahan.barang_id] = {
+        qty: Number.parseFloat(bahan.qty_per_menu),
+        satuan: bahan.satuan || "",
+      };
+    });
+
     res.render("pages/menu/edit", {
       menu,
       usahaList,
       title: "Edit Menu Makanan",
+      barangList,
+      bahanMap,
+      unitOptions: UNIT_OPTIONS,
     });
   } catch (error) {
     console.error("Error in renderEditMenuForm:", error);
@@ -340,9 +469,27 @@ exports.renderMenuIndex = async (req, res) => {
       harga: formatRupiah(item.harga),
     }));
 
+    const menuIds = menuItems.map((item) => item.id);
+    const bahanCountMap = new Map();
+    if (menuIds.length > 0) {
+      const [rows] = await db.query(
+        `SELECT menu_id, COUNT(*) AS cnt
+         FROM menu_bahan
+         WHERE menu_id IN (?)
+         GROUP BY menu_id`,
+        [menuIds]
+      );
+      rows.forEach((row) => bahanCountMap.set(row.menu_id, row.cnt));
+    }
+
+    const menuWithCounts = formattedMenuItems.map((item) => ({
+      ...item,
+      bahan_count: bahanCountMap.get(item.id) || 0,
+    }));
+
     res.render("pages/menu/index", {
       title: "Manajemen Menu Makanan",
-      menu: formattedMenuItems, // Gunakan data yang sudah diformat
+      menu: menuWithCounts, // Gunakan data yang sudah diformat
       usahaList: usahaList,
       selectedUsahaId: usaha_id || null,
     });

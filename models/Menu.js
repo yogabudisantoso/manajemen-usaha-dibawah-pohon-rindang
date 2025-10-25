@@ -1,9 +1,10 @@
 const db = require("../config/database");
 
 class Menu {
-  static async create(menuData) {
+  static async create(menuData, connection = null) {
     try {
       const { nama_menu, deskripsi, harga, stok, gambar, usaha_id } = menuData;
+      const executor = connection || db;
 
       // Validasi input
       if (!nama_menu || !harga || !stok || !usaha_id) {
@@ -19,7 +20,7 @@ class Menu {
         throw new Error("Stok harus berupa angka non-negatif");
       }
 
-      const [result] = await db.execute(
+      const [result] = await executor.execute(
         "INSERT INTO menu_makanan (nama_menu, deskripsi, harga, stok, gambar, usaha_id) VALUES (?, ?, ?, ?, ?, ?)",
         [nama_menu, deskripsi, harga, stok, gambar, usaha_id]
       );
@@ -68,9 +69,10 @@ class Menu {
     }
   }
 
-  static async update(id, menuData) {
+  static async update(id, menuData, connection = null) {
     try {
       const { nama_menu, deskripsi, harga, stok, gambar, usaha_id } = menuData;
+      const executor = connection || db;
 
       // Validasi input
       if (!id || !nama_menu || !harga || !stok || !usaha_id) {
@@ -86,7 +88,7 @@ class Menu {
         throw new Error("Stok harus berupa angka non-negatif");
       }
 
-      const [result] = await db.query(
+      const [result] = await executor.execute(
         "UPDATE menu_makanan SET nama_menu = ?, deskripsi = ?, harga = ?, stok = ?, gambar = ?, usaha_id = ? WHERE id = ?",
         [nama_menu, deskripsi, harga, stok, gambar, usaha_id, id]
       );
@@ -100,13 +102,14 @@ class Menu {
     }
   }
 
-  static async delete(id) {
+  static async delete(id, connection = null) {
     try {
       if (!id) {
         throw new Error("ID menu harus diisi");
       }
 
-      const [result] = await db.query("DELETE FROM menu_makanan WHERE id = ?", [
+      const executor = connection || db;
+      const [result] = await executor.execute("DELETE FROM menu_makanan WHERE id = ?", [
         id,
       ]);
       if (result.affectedRows === 0) {

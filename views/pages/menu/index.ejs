@@ -29,6 +29,7 @@
             <th>Usaha</th>
             <th>Harga</th>
             <th>Stok</th>
+            <th>Jumlah Bahan</th>
             <th>Gambar</th>
             <th>Aksi</th>
           </tr>
@@ -39,6 +40,7 @@
             <th>Usaha</th>
             <th>Harga</th>
             <th>Stok</th>
+            <th>Jumlah Bahan</th>
             <th>Gambar</th>
             <th>Aksi</th>
           </tr>
@@ -54,6 +56,7 @@
               %>
             </td>
             <td><%= item.stok || '0' %></td>
+            <td><%= item.bahan_count || 0 %></td>
             <td>
               <% if (item.gambar) { %>
               <img

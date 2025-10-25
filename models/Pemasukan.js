@@ -1,7 +1,7 @@
 const db = require("../config/database");
 
 class Pemasukan {
-  static async create(data) {
+  static async create(data, connection = null) {
     const {
       menu_id,
       user_id,
@@ -14,7 +14,8 @@ class Pemasukan {
       INSERT INTO pemasukan (menu_id, user_id, jumlah, harga_satuan, total_harga_item, usaha_id)
       VALUES (?, ?, ?, ?, ?, ?)
     `;
-    const result = await db.execute(query, [
+    const executor = connection || db;
+    const [result] = await executor.execute(query, [
       menu_id,
       user_id,
       jumlah,
@@ -23,7 +24,7 @@ class Pemasukan {
       usaha_id,
     ]);
     console.log("HASIL INSERT PEMASUKAN:", result);
-    return result[0].insertId;
+    return result.insertId;
   }
 
   static async findAll(usahaId = null) {

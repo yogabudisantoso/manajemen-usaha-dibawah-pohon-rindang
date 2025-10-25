@@ -1,114 +1,195 @@
 const Pemasukan = require("../models/Pemasukan");
 const Menu = require("../models/Menu");
+const MenuBahan = require("../models/MenuBahan");
+const Stok = require("../models/Stok");
+const db = require("../config/database");
 
 exports.createPemasukan = async (req, res) => {
   try {
-    console.log("=== PEMASUKAN CONTROLLER START ===");
-    console.log("REQ BODY PEMASUKAN:", req.body); // LOG REQUEST BODY
-    // Menerima array items dari frontend
-    const items = req.body.items;
-    const user_id = req.session.user ? req.session.user.id : 1; // Ganti dengan cara Anda mendapatkan user ID
-    console.log("Items to process:", items);
+    const rawItems = req.body.items;
+    const user_id = req.session.user ? req.session.user.id : 1;
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    const items = Array.isArray(rawItems)
+      ? rawItems
+      : rawItems
+      ? [rawItems]
+      : [];
+
+    const sanitizedItems = items
+      .map((item) => ({
+        menu_id: Number.parseInt(item.menu_id, 10),
+        jumlah: Number.parseInt(item.jumlah, 10),
+      }))
+      .filter(
+        (item) =>
+          Number.isInteger(item.menu_id) &&
+          item.menu_id > 0 &&
+          Number.isInteger(item.jumlah) &&
+          item.jumlah > 0
+      );
+
+    if (sanitizedItems.length === 0) {
       return res.status(400).json({
         message: "Daftar item pesanan tidak valid atau kosong",
         status: "error",
       });
     }
 
-    const createdPemasukan = [];
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    for (const item of items) {
-      const { menu_id, jumlah } = item;
-      if (!menu_id || !jumlah || jumlah <= 0) continue;
-      
-      const menu = await Menu.findById(menu_id);
-      if (!menu || !menu.harga || menu.harga <= 1) continue; // validasi harga
-      
-      // Validasi stok sebelum memproses pesanan
-      if (menu.stok < jumlah) {
-        return res.status(400).json({
-          message: `Stok ${menu.nama_menu} tidak mencukupi. Stok tersedia: ${menu.stok}, diminta: ${jumlah}`,
-          status: "error",
-        });
-      }
-      
-      // Kurangi stok
-      console.log(`Attempting to reduce stock for menu_id: ${menu_id}, quantity: ${jumlah}`);
-      console.log(`Current stock before reduction: ${menu.stok}`);
-      try {
-        await Menu.reduceStock(menu_id, jumlah);
-        console.log(`Stock reduction successful for menu: ${menu.nama_menu}`);
-      } catch (stockError) {
-        console.error(`Stock reduction failed: ${stockError.message}`);
-        return res.status(400).json({
-          message: `Gagal mengurangi stok untuk ${menu.nama_menu}: ${stockError.message}`,
-          status: "error",
-        });
-      }
-      
-      const harga_satuan = Number(menu.harga);
-      const total_harga_item = harga_satuan * jumlah;
-      const usaha_id = menu.usaha_id || 1;
-      const pemasukanData = {
-        menu_id,
-        user_id,
-        jumlah,
-        harga_satuan,
-        total_harga_item,
-        usaha_id,
-      };
-      const pemasukanId = await Pemasukan.create(pemasukanData);
-      if (pemasukanId) {
+      const createdPemasukan = [];
+
+      for (const item of sanitizedItems) {
+        const [menuRows] = await connection.execute(
+          `SELECT id, nama_menu, harga, usaha_id, stok
+           FROM menu_makanan
+           WHERE id = ?
+           FOR UPDATE`,
+          [item.menu_id]
+        );
+
+        if (!menuRows || menuRows.length === 0) {
+          const err = new Error(
+            `Menu dengan ID ${item.menu_id} tidak ditemukan`
+          );
+          err.status = 404;
+          throw err;
+        }
+
+        const menu = menuRows[0];
+        const bahanList =
+          (await MenuBahan.findByMenuId(item.menu_id, connection)) || [];
+
+        const currentMenuStok =
+          menu.stok !== null && menu.stok !== undefined
+            ? Number(menu.stok)
+            : null;
+        if (
+          currentMenuStok !== null &&
+          (Number.isNaN(currentMenuStok) || currentMenuStok < item.jumlah)
+        ) {
+          const err = new Error(
+            `Stok menu ${menu.nama_menu} tidak mencukupi. Tersisa ${currentMenuStok}, dibutuhkan ${item.jumlah}`
+          );
+          err.status = 400;
+          throw err;
+        }
+
+        if (Array.isArray(bahanList) && bahanList.length > 0) {
+          for (const bahan of bahanList) {
+            const qtyPerMenu = Number.parseFloat(bahan.qty_per_menu);
+            const needed = qtyPerMenu * item.jumlah;
+            if (!Number.isFinite(needed) || needed <= 0) continue;
+
+            const consumed = await Stok.decrementByBarangId(
+              bahan.barang_id,
+              needed,
+              menu.usaha_id,
+              connection
+            );
+
+            if (consumed < needed) {
+              console.warn(
+                `Stok bahan ${bahan.nama_barang} tidak mencukupi. Dibutuhkan ${needed}, terpakai ${consumed}`
+              );
+            }
+          }
+        }
+
+        if (currentMenuStok !== null) {
+          const [updateMenuStock] = await connection.execute(
+            `UPDATE menu_makanan
+             SET stok = stok - ?
+             WHERE id = ?`,
+            [item.jumlah, menu.id]
+          );
+          if (!updateMenuStock || updateMenuStock.affectedRows === 0) {
+            const err = new Error(
+              `Gagal memperbarui stok menu ${menu.nama_menu}`
+            );
+            err.status = 400;
+            throw err;
+          }
+        }
+
+        const harga_satuan = Number(menu.harga);
+        const total_harga_item = harga_satuan * item.jumlah;
+        const pemasukanId = await Pemasukan.create(
+          {
+            menu_id: menu.id,
+            user_id,
+            jumlah: item.jumlah,
+            harga_satuan,
+            total_harga_item,
+            usaha_id: menu.usaha_id || null,
+          },
+          connection
+        );
+
         createdPemasukan.push({
           id: pemasukanId,
-          ...pemasukanData,
+          menu_id: menu.id,
+          jumlah: item.jumlah,
+          harga_satuan,
+          total_harga_item,
+          usaha_id: menu.usaha_id || null,
           nama_menu: menu.nama_menu,
         });
       }
-    }
-    if (createdPemasukan.length === 0) {
-      return res.status(400).json({
-        message: "Tidak ada pesanan valid yang diproses",
+
+      if (createdPemasukan.length === 0) {
+        const err = new Error("Tidak ada pesanan valid yang diproses");
+        err.status = 400;
+        throw err;
+      }
+
+      await connection.commit();
+
+      const io = req.app.get("io");
+      if (io) {
+        const totalHarga = createdPemasukan.reduce(
+          (sum, item) => sum + (item.total_harga_item || 0),
+          0
+        );
+        const detailPesanan = createdPemasukan
+          .map(
+            (item) =>
+              `${item.jumlah} x ${item.nama_menu} @ Rp ${item.harga_satuan.toLocaleString(
+                "id-ID"
+              )} = Rp ${item.total_harga_item.toLocaleString("id-ID")}`
+          )
+          .join("<br>");
+        const notifData = {
+          type: "pemasukan",
+          transaction: {
+            detail: detailPesanan,
+            total: Number(totalHarga),
+          },
+        };
+        console.log("DATA YANG DIKIRIM KE FRONTEND:", notifData);
+        io.emit("new_transaction", notifData);
+      } else {
+        console.warn("Socket.IO not available to emit new transaction event.");
+      }
+
+      return res.status(201).json({
+        message: "Pesanan berhasil diproses",
+        status: "success",
+        data: createdPemasukan,
+      });
+    } catch (err) {
+      await connection.rollback();
+      const statusCode = err.status || 500;
+      console.error("Error dalam createPemasukan:", err);
+      return res.status(statusCode).json({
+        message: err.message || "Terjadi kesalahan saat memproses pesanan",
         status: "error",
       });
+    } finally {
+      connection.release();
     }
-    // Emit event Socket.IO satu kali saja untuk seluruh transaksi
-    const io = req.app.get("io"); // Ambil io dari objek app
-    if (io) {
-      const totalHarga = createdPemasukan.reduce(
-        (sum, item) => sum + (item.total_harga_item || 0),
-        0
-      );
-      const detailPesanan = createdPemasukan
-        .map(
-          (item) =>
-            `${item.jumlah} x ${
-              item.nama_menu
-            } @ Rp ${item.harga_satuan.toLocaleString(
-              "id-ID"
-            )} = Rp ${item.total_harga_item.toLocaleString("id-ID")}`
-        )
-        .join("<br>");
-      const notifData = {
-        type: "pemasukan",
-        transaction: {
-          detail: detailPesanan,
-          total: Number(totalHarga),
-        },
-      };
-      console.log("DATA YANG DIKIRIM KE FRONTEND:", notifData);
-      io.emit("new_transaction", notifData);
-    } else {
-      console.warn("Socket.IO not available to emit new transaction event.");
-    }
-
-    res.status(201).json({
-      message: "Pesanan berhasil diproses",
-      status: "success",
-      data: createdPemasukan,
-    });
   } catch (error) {
     console.error("Error dalam createPemasukan:", error);
     res.status(500).json({

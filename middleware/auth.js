@@ -8,7 +8,15 @@ const auth = (req, res, next) => {
   }
 
   try {
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+    // Prioritaskan sesi yang sudah login
+    if (req.session && req.session.user) {
+      req.user = req.session.user;
+      return next();
+    }
+
+    const authHeader =
+      req.header("Authorization") || req.header("authorization");
+    const token = authHeader ? authHeader.replace("Bearer ", "") : null;
 
     if (!token) {
       return res

@@ -1,6 +1,7 @@
 const Pengeluaran = require("../models/Pengeluaran");
 const Barang = require("../models/Barang");
 const db = require("../config/database"); // Perlu db untuk query usaha
+const Stok = require("../models/Stok");
 
 // Fungsi helper untuk format angka menjadi mata uang (misal: 1000000 -> 1.000.000)
 const formatRupiah = (number) => {
@@ -69,7 +70,18 @@ exports.recordPengeluaranBarang = async (req, res) => {
       usaha_id, // Tambahkan usaha_id
     };
 
-    await Pengeluaran.create(pengeluaranData);
+    const pengeluaranId = await Pengeluaran.create(pengeluaranData);
+
+    try {
+      await Stok.create({
+        pengeluaran_barang_id: pengeluaranId,
+        barang_id: parseInt(barang_id, 10),
+        jumlah_stok: parseInt(jumlah, 10),
+        usaha_id: usaha_id ? parseInt(usaha_id, 10) : null,
+      });
+    } catch (stokError) {
+      console.error("Gagal mencatat stok dari pengeluaran:", stokError);
+    }
 
     // Alihkan pengguna kembali ke halaman daftar pengeluaran setelah berhasil disimpan
     res.redirect("/pengeluaran");

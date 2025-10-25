@@ -1,0 +1,102 @@
+<!-- Page Heading -->
+<h1 class="h3 mb-2 text-gray-800">Stok Bahan</h1>
+<p class="mb-4">
+  Ringkasan stok barang yang tersedia dan pemakaian pada tanggal
+  <strong><%= tanggal %></strong>.
+</p>
+
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Tabel Stok</h6>
+  </div>
+  <div class="card-body">
+    <form class="form-inline mb-3" method="GET" action="/stok">
+      <div class="form-group mr-2">
+        <label for="tanggal" class="mr-2">Tanggal</label>
+        <input
+          type="date"
+          class="form-control"
+          id="tanggal"
+          name="tanggal"
+          value="<%= tanggal %>"
+        />
+      </div>
+      <div class="form-group mr-2">
+        <label for="usaha_id" class="mr-2">Usaha</label>
+        <select class="form-control" id="usaha_id" name="usaha_id">
+          <option value="">Semua Usaha</option>
+          <% if (usahaList && usahaList.length) { %> <% usahaList.forEach(function(usaha){ %>
+          <option
+            value="<%= usaha.id %>"
+            <%= selectedUsahaId === usaha.id ? 'selected' : '' %>
+          >
+            <%= usaha.nama_usaha %>
+          </option>
+          <% }) %> <% } %>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+
+    <div class="table-responsive">
+      <table
+        class="table table-bordered"
+        id="stokTable"
+        width="100%"
+        cellspacing="0"
+      >
+        <thead>
+          <tr>
+            <th>Barang</th>
+            <th>Total Stok</th>
+            <th>Terpakai</th>
+            <th>Sisa</th>
+            <th>Satuan</th>
+            <th>Komposisi Menu (qty per porsi)</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>Barang</th>
+            <th>Total Stok</th>
+            <th>Terpakai</th>
+            <th>Sisa</th>
+            <th>Satuan</th>
+            <th>Komposisi Menu (qty per porsi)</th>
+          </tr>
+        </tfoot>
+        <tbody>
+          <% if (stok && stok.length > 0) { %> <% stok.forEach(function(item){
+          %>
+          <tr>
+            <td><%= item.nama_barang || ('Barang #' + item.barang_id) %></td>
+            <td><%= item.total_stok %></td>
+            <td><%= item.used_total %></td>
+            <td><%= item.remaining %></td>
+            <td><%= item.satuan %></td>
+            <td>
+              <% if (item.komposisi && item.komposisi.length) { %>
+              <ul class="mb-0 pl-3">
+                <% item.komposisi.forEach(function(detail){ %>
+                <li>
+                  <strong><%= detail.nama_menu %></strong>:
+                  <%= (detail.qty_display !== undefined) ? detail.qty_display : detail.qty %>
+                  <%= detail.satuan || '-' %>
+                </li>
+                <% }) %>
+              </ul>
+              <% } else { %>
+              -
+              <% } %>
+            </td>
+          </tr>
+          <% }) %> <% } else { %>
+          <tr>
+            <td colspan="6" class="text-center">Belum ada data stok.</td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

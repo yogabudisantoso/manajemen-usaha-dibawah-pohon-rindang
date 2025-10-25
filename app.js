@@ -7,6 +7,7 @@ const menuRoutes = require("./routes/menu");
 const pemasukanRoutes = require("./routes/pemasukan");
 const barangRoutes = require("./routes/barang");
 const pengeluaranRoutes = require("./routes/pengeluaran");
+const stokRoutes = require("./routes/stok");
 const menuController = require("./controllers/menuController");
 const methodOverride = require("method-override");
 const pemasukanController = require("./controllers/pemasukanController");
@@ -164,6 +165,9 @@ app.post("/api/pemasukan", pemasukanController.createPemasukan);
 
 // Menggunakan route pengeluaran dan melindunginya dengan requireAuth
 app.use("/pengeluaran", requireAuth, pengeluaranRoutes);
+
+// Stok route
+app.use("/stok", requireAuth, stokRoutes);
 
 // Route untuk halaman Pemasukan (menggunakan router) - juga pastikan tidak ada requireAuth
 app.use("/pemasukan", pemasukanRoutes);
