@@ -2,6 +2,35 @@ const Pengeluaran = require("../models/Pengeluaran");
 const Barang = require("../models/Barang");
 const db = require("../config/database"); // Perlu db untuk query usaha
 const Stok = require("../models/Stok");
+// Debug helpers removed
+
+// Normalize number input from forms. Handles Indonesian style thousand separators
+// e.g. "1.440.000" -> "1440000" and "1.234,56" -> "1234.56"
+function normalizeNumberString(input) {
+  if (input === undefined || input === null) return "";
+  let s = String(input).trim();
+  if (s === "") return "";
+  // If contains comma and dot, assume dot thousands, comma decimal
+  if (s.indexOf(".") !== -1 && s.indexOf(",") !== -1) {
+    s = s.replace(/\./g, ""); // remove thousands dots
+    s = s.replace(/,/g, "."); // convert decimal comma to dot
+  } else if (s.indexOf(".") !== -1 && s.indexOf(",") === -1) {
+    // ambiguous: treat dots as thousand separators if there are more than 1 dot or digits after last dot != 3
+    const parts = s.split(".");
+    const last = parts[parts.length - 1];
+    if (parts.length > 2 || (last.length === 3 && parts.length > 1)) {
+      s = s.replace(/\./g, "");
+    }
+    // else keep as decimal
+  } else if (s.indexOf(",") !== -1) {
+    // commas used as decimal separator
+    s = s.replace(/\./g, "");
+    s = s.replace(/,/g, ".");
+  }
+  // Remove any non-digit except dot and minus
+  s = s.replace(/[^0-9.\-]/g, "");
+  return s;
+}
 
 // Fungsi helper untuk format angka menjadi mata uang (misal: 1000000 -> 1.000.000)
 const formatRupiah = (number) => {
@@ -15,7 +44,8 @@ const formatRupiah = (number) => {
 exports.recordPengeluaranBarang = async (req, res) => {
   try {
     // Mengambil barang_id, jumlah, harga_beli_satuan, dan usaha_id dari body permintaan
-    const { barang_id, jumlah, harga_beli_satuan, usaha_id, tanggal } = req.body;
+    const { barang_id, jumlah, harga_beli_satuan, usaha_id, tanggal, unit } =
+      req.body;
     // Mengambil user_id dari sesi yang terautentikasi
     const user_id = req.session.user ? req.session.user.id : null;
 
@@ -24,8 +54,17 @@ exports.recordPengeluaranBarang = async (req, res) => {
       return res.status(401).json({ message: "Pengguna tidak terautentikasi" });
     }
 
+    // debug logging removed
+
     // Validasi input
-    if (!barang_id || !jumlah || jumlah <= 0 || !harga_beli_satuan || harga_beli_satuan <= 0 || !usaha_id) {
+    if (
+      !barang_id ||
+      !jumlah ||
+      jumlah <= 0 ||
+      !harga_beli_satuan ||
+      harga_beli_satuan <= 0 ||
+      !usaha_id
+    ) {
       // Render ulang halaman create dengan pesan error dan data yang sudah ada (jika ini dari form)
       const barang = (await Barang.findAll()) || [];
       const [usaha] = (await db.query("SELECT * FROM usaha")) || [];
@@ -33,7 +72,8 @@ exports.recordPengeluaranBarang = async (req, res) => {
         title: "Tambah Pengeluaran",
         barang: barang,
         usaha: usaha, // Teruskan data usaha
-        error: "ID barang, jumlah beli, harga beli satuan yang valid, dan usaha harus diisi",
+        error:
+          "ID barang, jumlah beli, harga beli satuan yang valid, dan usaha harus diisi",
         // Isi kembali nilai-nilai form yang sudah diisi pengguna
         old: req.body,
       });
@@ -55,22 +95,36 @@ exports.recordPengeluaranBarang = async (req, res) => {
     }
 
     // Gunakan harga beli dari form input (bukan dari tabel barang)
-    const harga_beli_input = parseFloat(harga_beli_satuan);
+    const hargaNormalized = normalizeNumberString(harga_beli_satuan);
+    const harga_beli_input = parseFloat(hargaNormalized);
     // Hitung total biaya item menggunakan jumlah dan harga dari form
-    const total_biaya_item = harga_beli_input * parseInt(jumlah);
+    const jumlahInt =
+      parseInt(String(jumlah).replace(/[^0-9\-]/g, ""), 10) || 0;
+    const total_biaya_item = Number((harga_beli_input * jumlahInt).toFixed(2));
+
+    // Extra validation: ensure numbers are finite and within reasonable DB range
+    if (!isFinite(harga_beli_input) || !isFinite(total_biaya_item)) {
+      throw new Error("Invalid numeric input for harga or total");
+    }
+
+    // Sanitize and normalize unit value
+    const unitValue =
+      unit && String(unit).trim() ? String(unit).trim().toLowerCase() : "pcs";
 
     // Catat pengeluaran
     const pengeluaranData = {
       barang_id,
       user_id,
-      jumlah_beli: parseInt(jumlah),
-      harga_beli_satuan: harga_beli_input,
-      total_biaya_item,
+      jumlah_beli: jumlahInt,
+      harga_beli_satuan: Number(Number(harga_beli_input).toFixed(2)),
+      unit: unitValue,
+      total_biaya_item: Number(total_biaya_item),
       tanggal: tanggal ? new Date(tanggal) : new Date(),
       usaha_id, // Tambahkan usaha_id
     };
 
     const pengeluaranId = await Pengeluaran.create(pengeluaranData);
+    // debug logging removed
 
     try {
       await Stok.create({
@@ -140,6 +194,7 @@ exports.renderPengeluaranIndex = async (req, res) => {
   try {
     const { usaha_id } = req.query; // Dapatkan usaha_id dari query parameter
     const pengeluaranData = await Pengeluaran.findAll(usaha_id); // Ambil data pengeluaran, difilter jika ada usaha_id
+    // debug logging removed
     const usahaList = await Pengeluaran.getAllUsaha(); // Ambil daftar semua usaha
 
     const formattedPengeluaran = pengeluaranData.map((item) => {
@@ -149,9 +204,12 @@ exports.renderPengeluaranIndex = async (req, res) => {
         id: item.id,
         tanggal: tanggalPengeluaran,
         barang_id: item.barang_id,
+        unit: item.unit || "pcs",
         jumlah: item.jumlah_beli,
-        harga_beli_satuan: formatRupiah(item.harga_beli_satuan),
-        total_biaya_item: formatRupiah(item.total_biaya_item),
+        harga_beli_satuan: formatRupiah(
+          parseFloat(item.harga_beli_satuan || 0)
+        ),
+        total_biaya_item: formatRupiah(parseFloat(item.total_biaya_item || 0)),
         nama_barang: item.nama_barang,
         username: item.username,
         nama_usaha: item.nama_usaha || "-", // Pastikan nama_usaha ditampilkan (sesuai alias di model)
@@ -213,6 +271,7 @@ exports.renderEditPengeluaranPage = async (req, res) => {
         harga_satuan:
           pengeluaranItem.harga_satuan || pengeluaranItem.harga_beli_satuan,
         harga_beli_satuan: pengeluaranItem.harga_beli_satuan,
+        unit: pengeluaranItem.unit || "pcs",
         tanggal: pengeluaranItem.tanggal
           ? new Date(pengeluaranItem.tanggal)
           : new Date(),
@@ -229,14 +288,22 @@ exports.renderEditPengeluaranPage = async (req, res) => {
 exports.updatePengeluaranForm = async (req, res) => {
   try {
     const { id } = req.params;
-    const { barang_id, jumlah, harga_beli_satuan, tanggal, usaha_id } = req.body;
+    const { barang_id, jumlah, harga_beli_satuan, tanggal, usaha_id, unit } =
+      req.body;
     const user_id = req.session.user ? req.session.user.id : null;
 
     if (!user_id) {
       return res.status(401).send("Pengguna tidak terautentikasi");
     }
 
-    if (!barang_id || !jumlah || jumlah <= 0 || !harga_beli_satuan || harga_beli_satuan <= 0 || !usaha_id) {
+    if (
+      !barang_id ||
+      !jumlah ||
+      jumlah <= 0 ||
+      !harga_beli_satuan ||
+      harga_beli_satuan <= 0 ||
+      !usaha_id
+    ) {
       const barang = (await Barang.findAll()) || [];
       const [usaha] = (await db.query("SELECT * FROM usaha")) || [];
       const pengeluaranItem = await Pengeluaran.findById(id);
@@ -245,7 +312,8 @@ exports.updatePengeluaranForm = async (req, res) => {
         pengeluaran: { ...pengeluaranItem, ...req.body },
         barang: barang,
         usaha: usaha,
-        error: "ID barang, jumlah beli, harga beli satuan yang valid, dan usaha harus diisi",
+        error:
+          "ID barang, jumlah beli, harga beli satuan yang valid, dan usaha harus diisi",
       });
     }
 
@@ -266,10 +334,16 @@ exports.updatePengeluaranForm = async (req, res) => {
     const harga_beli_input = parseFloat(harga_beli_satuan);
     const total_biaya_item = harga_beli_input * parseInt(jumlah);
 
+    const unitValue =
+      unit && String(unit).trim() ? String(unit).trim().toLowerCase() : "pcs";
+
+    // debug logging removed
+
     const updated = await Pengeluaran.update(id, {
       barang_id,
       user_id,
       jumlah_beli: parseInt(jumlah),
+      unit: unitValue,
       harga_beli_satuan: harga_beli_input,
       total_biaya_item,
       tanggal: tanggal ? new Date(tanggal) : new Date(),
@@ -308,9 +382,16 @@ exports.deletePengeluaran = async (req, res) => {
 exports.getTotalCostAPI = async (req, res) => {
   try {
     const { usaha_id, start_date, end_date } = req.query;
-    const totalCost = await Pengeluaran.getTotalCost(usaha_id, start_date, end_date);
+    const totalCost = await Pengeluaran.getTotalCost(
+      usaha_id,
+      start_date,
+      end_date
+    );
     const totalCostByUsaha = await Pengeluaran.getTotalCostByUsaha();
-    const totalCostByMonth = await Pengeluaran.getTotalCostByMonth(null, usaha_id);
+    const totalCostByMonth = await Pengeluaran.getTotalCostByMonth(
+      null,
+      usaha_id
+    );
 
     res.json({
       message: "Data total biaya berhasil diambil",
@@ -318,8 +399,8 @@ exports.getTotalCostAPI = async (req, res) => {
         totalCost: totalCost,
         totalCostFormatted: formatRupiah(totalCost),
         totalCostByUsaha: totalCostByUsaha,
-        totalCostByMonth: totalCostByMonth
-      }
+        totalCostByMonth: totalCostByMonth,
+      },
     });
   } catch (error) {
     console.error("Error in getTotalCostAPI:", error);

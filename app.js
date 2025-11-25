@@ -98,10 +98,12 @@ app.get("/landing", async (req, res) => {
 
     const usahaList = await Usaha.getAllUsaha(); // Ambil daftar semua usaha
     const menuItems = await menuController.getAllMenuItems(userUsahaId); // Teruskan userUsahaId ke getAllMenuItems
-    
-    // Ambil data pemasukan
-    const pemasukan = await pemasukanController.getAllPemasukan({ query: { usaha_id: userUsahaId } }, {});
 
+    // Ambil data pemasukan
+    const pemasukan = await pemasukanController.getAllPemasukan(
+      { query: { usaha_id: userUsahaId } },
+      {}
+    );
 
     // Kelompokkan menu berdasarkan usaha
     const menuByUsaha = {};

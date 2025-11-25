@@ -60,6 +60,18 @@
           />
         </div>
         <div class="form-group">
+          <label for="unit">Satuan</label>
+          <select class="form-control" id="unit" name="unit">
+            <option value="pcs">pcs</option>
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="ml">ml</option>
+            <option value="l">l</option>
+            <option value="sendok">sendok</option>
+            <option value="sdt">sdt</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label for="harga_beli_satuan">Harga Satuan</label>
           <input
             type="number"
@@ -91,38 +103,33 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const jumlahInput = document.getElementById('jumlah');
-    const hargaInput = document.getElementById('harga_beli_satuan');
-    const totalInput = document.getElementById('total_biaya');
-    
-    function calculateTotal() {
-        const jumlah = parseFloat(jumlahInput.value) || 0;
-        const harga = parseFloat(hargaInput.value) || 0;
-        const total = jumlah * harga;
-        
-        // Format as Indonesian Rupiah
-        totalInput.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
-    }
-    
-    jumlahInput.addEventListener('input', calculateTotal);
-    hargaInput.addEventListener('input', calculateTotal);
-    
-    // Auto-fill price when item is selected
-    const barangSelect = document.getElementById('barang_id');
-    barangSelect.addEventListener('change', async function() {
-        if (this.value) {
-            try {
-                // You can add an API call here to get item price
-                // For now, we'll just trigger calculation
-                calculateTotal();
-            } catch (error) {
-                console.error('Error fetching item price:', error);
-            }
-        }
+  const jumlahInput = document.getElementById('jumlah');
+  const hargaInput = document.getElementById('harga_beli_satuan');
+  const totalInput = document.getElementById('total_biaya');
+
+  function calculateTotal() {
+    const jumlah = parseFloat(jumlahInput.value) || 0;
+    const harga = parseFloat(hargaInput.value) || 0;
+    const total = jumlah * harga;
+    totalInput.value = 'Rp ' + new Intl.NumberFormat('id-ID').format(total);
+  }
+
+  // Calculate initial total and bind events
+  calculateTotal();
+  jumlahInput.addEventListener('input', calculateTotal);
+  hargaInput.addEventListener('input', calculateTotal);
+
+  // If you want to auto-fill price when an item is selected, add an API call here.
+  const barangSelect = document.getElementById('barang_id');
+  if (barangSelect) {
+    barangSelect.addEventListener('change', function() {
+      calculateTotal();
     });
+  }
+  // No debug on submit; form posts normally
 });
 </script>
-    </div>
+  </div>
   </div>
 </div>
 <!-- /.container-fluid -->

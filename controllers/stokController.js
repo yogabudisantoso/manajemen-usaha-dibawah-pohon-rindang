@@ -14,6 +14,7 @@ exports.renderIndex = async (req, res) => {
       SELECT
         pb.barang_id,
         COALESCE(SUM(pb.jumlah_beli), 0) AS total_beli,
+        COALESCE(MAX(pb.unit), '') AS unit,
         COALESCE(MAX(b.nama_barang), CONCAT('Barang #', pb.barang_id)) AS nama_barang
       FROM pengeluaran_barang pb
       LEFT JOIN barang b ON pb.barang_id = b.id
@@ -68,16 +69,27 @@ exports.renderIndex = async (req, res) => {
 
     const totalMap = new Map();
     totalRows.forEach((row) => {
+      // Normalize unit: remove NBSP and trim, then treat empty as null
+      let unitVal = null;
+      if (row.unit !== undefined && row.unit !== null) {
+        try {
+          unitVal = row.unit
+            .toString()
+            .replace(/\u00A0/g, " ")
+            .trim();
+          if (unitVal.length === 0) unitVal = null;
+        } catch (e) {
+          unitVal = null;
+        }
+      }
       totalMap.set(row.barang_id, {
         nama_barang: row.nama_barang,
         total_stok: Number(row.total_beli) || 0,
+        unit: unitVal,
       });
     });
 
-    const allBarangIds = new Set([
-      ...totalMap.keys(),
-      ...komposisiMap.keys(),
-    ]);
+    const allBarangIds = new Set([...totalMap.keys(), ...komposisiMap.keys()]);
 
     const stok = Array.from(allBarangIds).map((barangId) => {
       const stokInfo = totalMap.get(barangId) || {
@@ -90,15 +102,22 @@ exports.renderIndex = async (req, res) => {
         (sum, item) => sum + (Number(item.qty) || 0),
         0
       );
-      const satuanSet = new Set(
-        komposisi
-          .map((item) => item.satuan)
-          .filter((satuan) => satuan && satuan.trim().length > 0)
-      );
-      const satuanDisplay =
-        satuanSet.size === 0
-          ? "-"
-          : Array.from(satuanSet.values()).join(", ");
+      // Prefer the unit from pengeluaran_barang (stokInfo.unit) if available;
+      // otherwise fall back to komposisi-derived satuan values.
+      let satuanDisplay = "-";
+      if (stokInfo.unit) {
+        satuanDisplay = stokInfo.unit;
+      } else {
+        const satuanSet = new Set(
+          komposisi
+            .map((item) => item.satuan)
+            .filter((satuan) => satuan && satuan.trim().length > 0)
+        );
+        satuanDisplay =
+          satuanSet.size === 0
+            ? "-"
+            : Array.from(satuanSet.values()).join(", ");
+      }
       return {
         barang_id: barangId,
         nama_barang:
@@ -106,8 +125,7 @@ exports.renderIndex = async (req, res) => {
           barangNameMap.get(barangId) ||
           `Barang #${barangId}`,
         total_stok: total,
-        used_total: used,
-        remaining: total - used,
+        // 'Terpakai' and 'Sisa' columns removed from UI; keep komposisi and satuan
         satuan: satuanDisplay,
         komposisi,
       };

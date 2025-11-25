@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const pengeluaranController = require("../controllers/pengeluaranController");
+// debug helpers removed
 // const auth = require("../middleware/auth"); // Middleware auth (token-based) - Dihapus
 const isAuthenticated = require("../middleware/isAuthenticated"); // Import middleware isAuthenticated (session-based) - Hanya digunakan untuk rute index jika perlu
 // const authorize = require('../middleware/authorize'); // Middleware untuk otorisasi role

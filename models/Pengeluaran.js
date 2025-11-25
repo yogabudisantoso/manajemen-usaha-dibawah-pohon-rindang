@@ -8,20 +8,32 @@ class Pengeluaran {
       jumlah_beli,
       harga_beli_satuan,
       total_biaya_item,
+      unit,
       usaha_id,
       tanggal,
     } = pengeluaranData;
+    // Coerce numeric values to safe types/strings before sending to DB
+    const hargaParam =
+      typeof harga_beli_satuan === "number"
+        ? harga_beli_satuan
+        : parseFloat(String(harga_beli_satuan).replace(/[^0-9.\-]/g, "")) || 0;
+    const totalParam =
+      typeof total_biaya_item === "number"
+        ? total_biaya_item
+        : parseFloat(String(total_biaya_item).replace(/[^0-9.\-]/g, "")) || 0;
+    const params = [
+      barang_id,
+      user_id,
+      jumlah_beli,
+      unit || "pcs",
+      Number(hargaParam).toFixed(2),
+      Number(totalParam).toFixed(2),
+      usaha_id,
+      tanggal,
+    ];
     const [result] = await db.execute(
-      "INSERT INTO pengeluaran_barang (barang_id, user_id, jumlah_beli, harga_beli_satuan, total_biaya_item, usaha_id, tanggal) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [
-        barang_id,
-        user_id,
-        jumlah_beli,
-        harga_beli_satuan,
-        total_biaya_item,
-        usaha_id,
-        tanggal,
-      ]
+      "INSERT INTO pengeluaran_barang (barang_id, user_id, jumlah_beli, unit, harga_beli_satuan, total_biaya_item, usaha_id, tanggal) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      params
     );
     return result.insertId;
   }
@@ -65,15 +77,17 @@ class Pengeluaran {
       jumlah_beli,
       harga_beli_satuan,
       total_biaya_item,
+      unit,
       usaha_id,
       tanggal,
     } = pengeluaranData;
     const [result] = await db.execute(
-      "UPDATE pengeluaran_barang SET barang_id = ?, user_id = ?, jumlah_beli = ?, harga_beli_satuan = ?, total_biaya_item = ?, usaha_id = ?, tanggal = ? WHERE id = ?",
+      "UPDATE pengeluaran_barang SET barang_id = ?, user_id = ?, jumlah_beli = ?, unit = ?, harga_beli_satuan = ?, total_biaya_item = ?, usaha_id = ?, tanggal = ? WHERE id = ?",
       [
         barang_id,
         user_id,
         jumlah_beli,
+        unit || "pcs",
         harga_beli_satuan,
         total_biaya_item,
         usaha_id,
@@ -125,7 +139,7 @@ class Pengeluaran {
     }
 
     if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
+      query += ` WHERE ${conditions.join(" AND ")}`;
     }
 
     const [rows] = await db.execute(query, params);
@@ -145,7 +159,7 @@ class Pengeluaran {
       GROUP BY us.id, us.nama_usaha
       ORDER BY total_cost DESC
     `;
-    
+
     const [rows] = await db.execute(query);
     return rows;
   }
@@ -175,7 +189,7 @@ class Pengeluaran {
     }
 
     if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
+      query += ` WHERE ${conditions.join(" AND ")}`;
     }
 
     query += ` GROUP BY YEAR(pb.tanggal), MONTH(pb.tanggal) ORDER BY year DESC, month DESC`;

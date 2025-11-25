@@ -11,7 +11,6 @@
     </a>
   </div>
 
-
   <!-- DataTales Example -->
   <div class="card shadow mb-4">
     <div class="card-header py-3">
@@ -30,6 +29,7 @@
               <th>No</th>
               <th>Tanggal</th>
               <th>Barang</th>
+              <th>Satuan</th>
               <th>Jumlah Beli</th>
               <th>Harga Beli Satuan</th>
               <th>Total Biaya</th>
@@ -47,6 +47,7 @@
                 dateStyle: 'medium' }) : '-' %>
               </td>
               <td><%= item.nama_barang %></td>
+              <td><%= item.unit ? item.unit : 'pcs' %></td>
               <td><%= item.jumlah %></td>
               <td><%= item.harga_beli_satuan %></td>
               <td><%= item.total_biaya_item %></td>
@@ -72,7 +73,7 @@
             </tr>
             <% }) %> <% } else { %>
             <tr>
-              <td colspan="8" class="text-center">
+              <td colspan="9" class="text-center">
                 Tidak ada data pengeluaran
               </td>
             </tr>
@@ -82,6 +83,5 @@
       </div>
     </div>
   </div>
-
 </div>
 <!-- /.container-fluid -->

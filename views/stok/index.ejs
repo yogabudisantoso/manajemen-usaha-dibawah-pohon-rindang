@@ -49,8 +49,6 @@
           <tr>
             <th>Barang</th>
             <th>Total Stok</th>
-            <th>Terpakai</th>
-            <th>Sisa</th>
             <th>Satuan</th>
             <th>Komposisi Menu (qty per porsi)</th>
           </tr>
@@ -59,8 +57,6 @@
           <tr>
             <th>Barang</th>
             <th>Total Stok</th>
-            <th>Terpakai</th>
-            <th>Sisa</th>
             <th>Satuan</th>
             <th>Komposisi Menu (qty per porsi)</th>
           </tr>
@@ -71,8 +67,6 @@
           <tr>
             <td><%= item.nama_barang || ('Barang #' + item.barang_id) %></td>
             <td><%= item.total_stok %></td>
-            <td><%= item.used_total %></td>
-            <td><%= item.remaining %></td>
             <td><%= item.satuan %></td>
             <td>
               <% if (item.komposisi && item.komposisi.length) { %>
@@ -92,7 +86,7 @@
           </tr>
           <% }) %> <% } else { %>
           <tr>
-            <td colspan="6" class="text-center">Belum ada data stok.</td>
+            <td colspan="4" class="text-center">Belum ada data stok.</td>
           </tr>
           <% } %>
         </tbody>
